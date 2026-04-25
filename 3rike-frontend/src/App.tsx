@@ -1,7 +1,7 @@
 import "./App.css";
 import { Routes, Route, BrowserRouter } from "react-router-dom";
 import Layout from "@/components/ui/layout";
-import { CreateAccountForm, ForgotPasswordEmailForm, ForgotPasswordPhoneForm, Landing, LoginForm, NoMatch, Onboarding, DriverDashboard, VerifyAccountForm, VerificationSuccess, VerificationFailed, VerificationFailedForm, LoanDashboard, LoanRequestSuccess, LoanNotification, SavingsOnboarding, SavingsDashboard, Loan, Savings, Verification, SavingsTargetDashboard, SavingsTargetForm, SavingsSummary, SavingsNotification, SavingsTargetSuccess, AiDashboard, DriverNotification, Withdraw, SetPinWithdraw, WithdrawBankDetails, WithdrawSendMoney, Settings, SettingsHome, SettingsProfile, PaymentSettings, ChangePaymentPin, WithdrawCryptoAsset, Investment, InvestmentHome } from "./pages";
+import { CreateAccountForm, ForgotPasswordEmailForm, ForgotPasswordPhoneForm, Landing, LoginForm, NoMatch, Onboarding, DriverDashboard, VerifyAccountForm, VerificationSuccess, VerificationFailed, VerificationFailedForm, LoanDashboard, LoanRequestSuccess, LoanNotification, SavingsOnboarding, SavingsDashboard, Loan, Savings, Verification, SavingsTargetDashboard, SavingsTargetForm, SavingsSummary, SavingsNotification, SavingsTargetSuccess, AiDashboard, DriverNotification, Withdraw, SetPinWithdraw, WithdrawBankDetails, WithdrawSendMoney, Settings, SettingsHome, SettingsProfile, PaymentSettings, ChangePaymentPin, WithdrawCryptoAsset, Investment, InvestmentHome, Own3rike, Own3rikeDetails, Welcome3riker, ThreeDetails } from "./pages";
 import SelectCryptoAsset from "./pages/driver/withdraw/crypto/select-crypto";
 
 
@@ -67,6 +67,15 @@ function App() {
             <Route path="investment" element={<Investment />}>
               <Route index element={<InvestmentHome />} />
             </Route>
+
+            {/* Own a 3rike (post-approval ownership flow) */}
+            <Route path="own-3rike" element={<Own3rike />}>
+              <Route index element={<Own3rikeDetails />} />
+              <Route path="welcome" element={<Welcome3riker />} />
+            </Route>
+
+            {/* 3rike Details (post-purchase ownership progress) */}
+            <Route path="3rike-details" element={<ThreeDetails />} />
 
             {/* Settings route */}
             <Route path="settings" element={<Settings />}>

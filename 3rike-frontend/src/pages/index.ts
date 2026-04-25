@@ -39,6 +39,10 @@ import SelectCryptoAsset from "./driver/withdraw/crypto/select-crypto";
 import WithdrawCryptoAsset from "./driver/withdraw/crypto/withdraw-crypto";
 import Investment from "./driver/investment";
 import InvestmentHome from "./driver/investment/home";
+import Own3rike from "./driver/own-3rike";
+import Own3rikeDetails from "./driver/own-3rike/details";
+import Welcome3riker from "./driver/own-3rike/welcome";
+import ThreeDetails from "./driver/3rike-details";
 export {
     Landing,
     NoMatch,
@@ -80,5 +84,9 @@ export {
     SelectCryptoAsset,
     WithdrawCryptoAsset,
     Investment,
-    InvestmentHome
+    InvestmentHome,
+    Own3rike,
+    Own3rikeDetails,
+    Welcome3riker,
+    ThreeDetails
 }

@@ -10,7 +10,7 @@ import {
   Bell,
   User,
   Send,
-  ArrowDown
+  ArrowDown,
 } from "lucide-react";
 import DepositModal from "../deposit";
 import WithdrawOptions from "../withdraw/options";
@@ -19,7 +19,7 @@ export default function DriverDashboard() {
   const navigate = useNavigate();
   const [changeCurrency, setChangeCurrency] = useState(true);
   const [verificationStatus, setVerificationStatus] = useState<
-    "not_started" | "in_progress" | "approved"
+    "not_started" | "in_progress" | "approved" | "3riker"
   >("not_started");
 
   // State to control the modals
@@ -31,41 +31,60 @@ export default function DriverDashboard() {
     const status = localStorage.getItem("verificationStatus") as
       | "not_started"
       | "in_progress"
-      | "approved";
+      | "approved"
+      | "3riker";
 
     if (status) {
       setVerificationStatus(status);
     }
   }, []);
 
+  // Auto-transition: in_progress -> approved after ~2s so the user sees the
+  // "Verification in Progress" banner briefly before unlocking "Own a 3rike".
+  useEffect(() => {
+    if (verificationStatus !== "in_progress") return;
+    const t = setTimeout(() => {
+      setVerificationStatus("approved");
+      localStorage.setItem("verificationStatus", "approved");
+    }, 2000);
+    return () => clearTimeout(t);
+  }, [verificationStatus]);
+
   const handleLoan = () => {
-    navigate('/driver/loan')
+    navigate("/driver/loan");
   };
 
   const handleSavings = () => {
-    navigate('/driver/savings')
+    navigate("/driver/savings");
   };
   const handleInvestment = () => {
-    navigate('/driver/investment')
+    navigate("/driver/investment");
   };
   const handleVerification = () => {
-    navigate('/driver/verification')
+    if (verificationStatus === "approved") {
+      navigate("/driver/own-3rike");
+      return;
+    }
+    if (verificationStatus === "3riker") {
+      navigate("/driver/3rike-details");
+      return;
+    }
+    navigate("/driver/verification");
   };
   const handle3rikeAi = () => {
-    navigate('/driver/3rikeAi')
+    navigate("/driver/3rikeAi");
   };
   const handleNotification = () => {
-    navigate('/driver/notification')
+    navigate("/driver/notification");
   };
   const handleSettings = () => {
-    navigate('/driver/settings')
+    navigate("/driver/settings");
   };
 
   return (
     <div className="min-h-screen bg-white flex justify-center">
       {/* Mobile Frame Container */}
       <div className="w-full max-w-100 bg-white shadow-2xl overflow-hidden min-h-200 relative pb-10">
-
         {/* Header Profile */}
         <div className="px-6 flex items-center justify-between pt-6 mb-4">
           <div className="flex items-center gap-3 bg-white rounded-full">
@@ -73,7 +92,9 @@ export default function DriverDashboard() {
             <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden border-2 border-white">
               <img src="/profile.png" alt="User" />
             </div>
-            <span className="font-light text-sm -mr-5">Welcome, Effiong Musa</span>
+            <span className="font-light text-sm -mr-5">
+              Welcome, Effiong Musa
+            </span>
             <Button variant="link">
               <img src="arrow.svg" alt="Arrow" className="w-5 h-5" />
             </Button>
@@ -82,7 +103,6 @@ export default function DriverDashboard() {
 
         {/* Main Content Scroll Area */}
         <div className="px-5 space-y-4">
-
           {/* 1. GREEN BALANCE CARD */}
           <div className="relative w-full rounded-3xl p-6 text-white overflow-hidden">
             {/* Background Gradient & Blobs */}
@@ -94,7 +114,9 @@ export default function DriverDashboard() {
 
             <div className="relative z-10">
               <div className="flex justify-between items-start mb-2">
-                <span className="text-green-100 text-sm font-light">Total Lifetime Earnings</span>
+                <span className="text-green-100 text-sm font-light">
+                  Total Lifetime Earnings
+                </span>
               </div>
 
               <div className="flex flex-row justify-between mb-6">
@@ -112,9 +134,7 @@ export default function DriverDashboard() {
                 </div>
               </div>
 
-
               <div className="flex gap-4">
-
                 <Button
                   onClick={() => setIsDepositOpen(true)}
                   className="flex-1 bg-transparent hover:bg-white/30 text-white border border-white rounded-full h-12 gap-2 text-sm font-medium backdrop-blur-sm"
@@ -125,7 +145,10 @@ export default function DriverDashboard() {
                   Deposit
                 </Button>
 
-                <Button onClick={() => setIsWithdrawOpen(true)} className="flex-1 bg-transparent hover:bg-white/30 text-white border border-white rounded-full h-12 gap-2 text-sm font-medium backdrop-blur-sm">
+                <Button
+                  onClick={() => setIsWithdrawOpen(true)}
+                  className="flex-1 bg-transparent hover:bg-white/30 text-white border border-white rounded-full h-12 gap-2 text-sm font-medium backdrop-blur-sm"
+                >
                   <div className="bg-white text-[#00C258] rounded-full p-0.5 w-5 h-5 flex items-center justify-center">
                     <ArrowUpRight size={14} strokeWidth={4} />
                   </div>
@@ -163,59 +186,114 @@ export default function DriverDashboard() {
           {/* to simulate approval */}
           <button
             type="button"
-            onClick={() => setVerificationStatus("approved")}
+            onClick={() => {
+              setVerificationStatus("approved");
+              localStorage.setItem("verificationStatus", "approved");
+            }}
             className="ml-2 text-xs text-[#1B8036] underline hover:[#1B8036] bg-transparent border-none cursor-pointer"
           >
             (Simulate Approval)
           </button>
+
           {/* 3. VERIFICATION BANNER */}
-          <div onClick={handleVerification} className="relative w-full bg-[#1B8036] rounded-2xl p-5 overflow-hidden text-white flex items-center justify-between">
+          {verificationStatus === "3riker" ? (
+            // "My future 3rike" variant — shown after the user becomes a 3riker
+            <div
+              onClick={handleVerification}
+              className="relative w-full rounded-2xl px-4 py-3 overflow-hidden text-white flex items-center justify-between cursor-pointer"
+            >
+              <img
+                src="/future-3rike.svg"
+                alt="Card Background"
+                className="absolute inset-0 w-full h-full bg-[#1E8A32] object-cover z-0"
+              />
+              <div className="relative z-10 max-w-[66%]">
+                <div className="w-5 h-5 bg-white/20 rounded-lg flex items-center justify-center mb-2 backdrop-blur-md">
+                  <img
+                    src="/verification-bike.svg"
+                    alt="bike"
+                    className="absolute inset-0 w-full h-full object-cover z-0"
+                  />
+                </div>
 
-            {/* Abstract Background Pattern (Simulated with SVG) */}
-            <img
-              src="/verification-banner.svg"
-              alt="Card Background"
-              className="absolute inset-0 w-full h-full bg-[#1E8A32] object-cover z-0"
-            />
+                <h3 className="font-bold text-[14px] leading-tight">
+                  My future 3rike
+                </h3>
 
-            <div className="relative z-10">
-              <div className="w-5 h-5 bg-white/20 rounded-lg flex items-center justify-center mb-2 backdrop-blur-md">
-                {/* Icon simulating the scooter/delivery icon */}
-                <img
-                  src="/verification-bike.svg"
-                  alt="Card Background"
-                  className="absolute inset-0 w-full h-full  object-cover z-0"
-                />
+                <p className="text-[12px] text-white/90 mt-0.5 leading-snug">
+                  Contribute your weekly fees and check out specs.{" "}
+                  <span className="inline-flex items-center gap-1 text-[#01C259] font-medium">
+                    Click here
+                    <img
+                      src="/arrows_right_line.svg"
+                      alt="arrow"
+                      className="w-4 h-4"
+                    />
+                  </span>
+                </p>
+              </div>
+              <img
+                src="/future-33rike.svg"
+                alt="3rike"
+                className="relative z-10 min-w-[120px] h-full -mr-2"
+              />
+            </div>
+          ) : (
+            <div
+              onClick={handleVerification}
+              className="relative w-full bg-[#1B8036] rounded-2xl p-5 overflow-hidden text-white flex items-center justify-between cursor-pointer"
+            >
+              <img
+                src={verificationStatus === "approved" ? "/own-a-3rike.svg" : "/verification-banner.svg"}
+                alt="Card Background"
+                className="absolute inset-0 w-full h-full bg-[#1E8A32] object-cover z-0"
+              />
+
+              <div className="relative z-10">
+                <div className="w-5 h-5 bg-white/20 rounded-lg flex items-center justify-center mb-2 backdrop-blur-md">
+                  <img
+                    src="/verification-bike.svg"
+                    alt="bike"
+                    className="absolute inset-0 w-full h-full object-cover z-0"
+                  />
+                </div>
+
+                <h3 className="font-bold text-lg leading-tight">
+                  {verificationStatus === "not_started" && "Start Verification"}
+                  {verificationStatus === "in_progress" &&
+                    "Verification in Progress"}
+                  {verificationStatus === "approved" && "Own a 3rike"}
+                </h3>
+
+                <p className="text-sm text-white mt-0.5">
+                  {verificationStatus === "not_started" &&
+                    "Complete Kyc and be eligible."}
+                  {verificationStatus === "in_progress" &&
+                    "Details received. We’ll be in touch soon."}
+                  {verificationStatus === "approved" &&
+                    "Continue to get your 3rike"}
+                </p>
               </div>
 
-              <h3 className="font-bold text-lg leading-tight">
-                {verificationStatus === "not_started" && "Start Verification"}
-                {verificationStatus === "in_progress" && "Verification in Progress"}
-                {verificationStatus === "approved" && "Own a 3rike"}
-              </h3>
-
-              <p className="text-sm text-white mt-0.5">
-                {verificationStatus === "not_started" && "Complete Kyc and be eligible."}
-                {verificationStatus === "in_progress" && "Details received. We’ll be in touch soon."}
-                {verificationStatus === "approved" && "Register and own a 3rike"}
-              </p>
+              <div className="absolute bottom-4 right-4 z-10 w-8 h-8 bg-[#00C258] rounded-full flex items-center justify-center shadow-lg">
+                <Button variant="link">
+                  <img
+                    src="/arrow-right.svg"
+                    alt="arrow"
+                    className="absolute inset-0 w-full h-full object-cover z-0"
+                  />
+                </Button>
+              </div>
             </div>
-
-            <div className="absolute bottom-4 right-4 z-10 w-8 h-8 bg-[#00C258] rounded-full flex items-center justify-center shadow-lg">
-              <Button variant="link">
-                <img
-                  src="/arrow-right.svg"
-                  alt="Card Background"
-                  className="absolute inset-0 w-full h-full  object-cover z-0"
-                />
-              </Button>
-            </div>
-          </div>
+          )}
 
           {/* 4. BOTTOM GRID MENU */}
           <div className="grid grid-cols-2 gap-4">
             {/* Savings */}
-            <div onClick={handleSavings} className="bg-white border-3 border-dashed border-gray-100 rounded-2xl p-4 flex flex-col  gap-2 ">
+            <div
+              onClick={handleSavings}
+              className="bg-white border-3 border-dashed border-gray-100 rounded-2xl p-4 flex flex-col  gap-2 "
+            >
               <div className="w-5 h-5 bg-white/20 rounded-lg flex items-center justify-center mb-2 backdrop-blur-md">
                 <img
                   src="/piggy.svg"
@@ -227,7 +305,10 @@ export default function DriverDashboard() {
             </div>
 
             {/* Investment */}
-            <div onClick={handleInvestment} className="bg-white border-3 border-dashed border-gray-100 rounded-2xl p-4 flex flex-col gap-2 ">
+            <div
+              onClick={handleInvestment}
+              className="bg-white border-3 border-dashed border-gray-100 rounded-2xl p-4 flex flex-col gap-2 "
+            >
               <div className="w-5 h-5 bg-white/20 rounded-lg flex items-center justify-center mb-2 backdrop-blur-md">
                 <img
                   src="/invest.svg"
@@ -251,7 +332,10 @@ export default function DriverDashboard() {
             </div>
 
             {/* Loan */}
-            <div onClick={handleLoan} className="bg-white border-3 border-dashed border-gray-100 rounded-2xl p-4 flex flex-col gap-2 ">
+            <div
+              onClick={handleLoan}
+              className="bg-white border-3 border-dashed border-gray-100 rounded-2xl p-4 flex flex-col gap-2 "
+            >
               <div className="w-5 h-5 bg-white/20 rounded-lg flex items-center justify-center mb-2 backdrop-blur-md">
                 <img
                   src="/loan.svg"
@@ -262,7 +346,6 @@ export default function DriverDashboard() {
               <span className="text-gray-800 text-lg">Loan</span>
             </div>
           </div>
-
         </div>
 
         {/* BOTTOM NAVIGATION BAR */}
@@ -292,11 +375,7 @@ export default function DriverDashboard() {
               size="icon"
               className="hover:bg-transparent text-gray-400"
             >
-              <img
-                src="/settings.svg"
-                alt="settings"
-                className=" w-5 h-5"
-              />
+              <img src="/settings.svg" alt="settings" className=" w-5 h-5" />
             </Button>
           </div>
 
@@ -307,37 +386,40 @@ export default function DriverDashboard() {
             onClick={() => setIsMenuOpen(true)} // Open modal on click
             className="hover:bg-transparent w-full h-full text-gray-400"
           >
-            <img
-              src="/add.svg"
-              alt="add"
-              className="ml-25 w-15 h-15"
-            />
+            <img src="/add.svg" alt="add" className="ml-25 w-15 h-15" />
           </Button>
         </div>
 
         {/* --- OVERLAY MODAL --- */}
         {isMenuOpen && (
           <div className="absolute inset-0 z-50 bg-[#F3F5F9]/95 backdrop-blur-sm flex flex-col justify-end items-end p-2 animate-in fade-in duration-200">
-
             {/* Menu Items Container */}
             <div className="flex flex-col gap-6 mb-10 mr-20 items-start">
-
               {/* Option 1: Pay 3rike Ai */}
-              <div onClick={handle3rikeAi} className="flex items-center gap-4 cursor-pointer group">
+              <div
+                onClick={handle3rikeAi}
+                className="flex items-center gap-4 cursor-pointer group"
+              >
                 <User className="w-6 h-6 text-[#00C259]" fill="#00C259" />
-                <span className="text-lg font-light text-black group-hover:text-gray-700">Pay 3rike Ai</span>
+                <span className="text-lg font-light text-black group-hover:text-gray-700">
+                  Pay 3rike Ai
+                </span>
               </div>
 
               {/* Option 2: Send */}
               <div className="flex items-center gap-4 cursor-pointer group">
                 <Send className="w-6 h-6 text-[#9747FF]" fill="#9747FF" />
-                <span className="text-lg font-light text-black group-hover:text-gray-700">Send</span>
+                <span className="text-lg font-light text-black group-hover:text-gray-700">
+                  Send
+                </span>
               </div>
 
               {/* Option 3: Recieve */}
               <div className="flex items-center gap-4 cursor-pointer group">
                 <ArrowDown className="w-6 h-6 text-[#FF9900]" strokeWidth={3} />
-                <span className="text-lg font-light text-black group-hover:text-gray-700">Recieve</span>
+                <span className="text-lg font-light text-black group-hover:text-gray-700">
+                  Recieve
+                </span>
               </div>
             </div>
 
@@ -354,7 +436,6 @@ export default function DriverDashboard() {
             </Button>
           </div>
         )}
-
       </div>
 
       {/* deposit modal */}
