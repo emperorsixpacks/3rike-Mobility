@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Bell, Home, Plus, RefreshCw, Wallet } from "lucide-react";
+import BottomNav from "@/components/ui/bottom-nav";
 
 type Tier = {
   label: string;
@@ -68,8 +68,6 @@ export default function ThreeDetails() {
             className="absolute inset-0 w-full h-full object-cover opacity-40 z-0"
           />
 
-      
-
           {/* tricycle image */}
           <div className="relative z-10 flex items-center justify-center h-44">
             <img
@@ -93,14 +91,14 @@ export default function ThreeDetails() {
           <div className="relative mx-7 z-10 mt-3 flex gap-3">
             <Button
               variant="ghost"
-              className="flex-1 bg-white/10 hover:bg-white/20 text-white border border-white/40 rounded-full h-10 gap-2 text-sm"
+              className="flex-1 bg-white/10 hover:bg-white/20 text-white border border-white/40 rounded-full h-10 gap-2 text-sm cursor-pointer"
             >
               <img src="/future-pay.svg" alt="pay" />
               Pay Now
             </Button>
             <Button
               variant="ghost"
-              className="flex-1 bg-white/10 hover:bg-white/20 text-white border border-white/40 rounded-full h-10 gap-2 text-sm"
+              className="flex-1 bg-white/10 hover:bg-white/20 text-white border border-white/40 rounded-full h-10 gap-2 text-sm cursor-pointer"
             >
               <img src="/future-refresh.svg" alt="auto pay" />
               Auto-Pay
@@ -165,39 +163,7 @@ export default function ThreeDetails() {
           (Simulate Progress: +100)
         </button>
 
-        {/* Bottom nav */}
-        <div className="absolute bottom-6 left-0 w-full flex items-center justify-between px-6">
-          <div className="bg-white rounded-full shadow-lg px-1 py-1 flex items-center -space-x-2">
-            <Button
-              variant="link"
-              size="icon"
-              onClick={() => navigate("/driver")}
-              className="hover:bg-transparent text-black"
-            >
-              <Home className="w-6 h-6 fill-current" />
-            </Button>
-            <Button
-              variant="link"
-              size="icon"
-              onClick={() => navigate("/driver/notification")}
-              className="hover:bg-transparent text-[#909090]"
-            >
-              <Bell className="w-6 h-6 fill-current" />
-            </Button>
-            <Button
-              variant="link"
-              size="icon"
-              onClick={() => navigate("/driver/settings")}
-              className="hover:bg-transparent text-gray-400"
-            >
-              <img src="/settings.svg" alt="settings" className="w-5 h-5" />
-            </Button>
-          </div>
-
-          <div className="w-12 h-12 bg-[#01C259] rounded-full flex items-center justify-center shadow-lg">
-            <Plus className="w-6 h-6 text-white" strokeWidth={3} />
-          </div>
-        </div>
+        <BottomNav />
       </div>
     </div>
   );
