@@ -53,7 +53,7 @@ export default function Own3rikeDetails() {
               key={i}
               type="button"
               onClick={() => setActiveImage(i)}
-              className={`w-20 h-20 rounded-2xl flex items-center justify-center overflow-hidden ${
+              className={`w-20 h-20 rounded-2xl flex items-center justify-center overflow-hidden cursor-pointer ${
                 activeImage === i ? "ring-2 ring-[#01C259]" : ""
               }`}
             >

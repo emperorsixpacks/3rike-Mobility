@@ -133,6 +133,19 @@ type Session struct {
 	ExpiresAt time.Time `json:"expires_at"`
 }
 
+// WaitlistEntry is a pre-launch signup capturing interested users on the
+// landing page. Email is unique; phone is optional. ReferralCode is a short
+// unique slug used for the share-to-skip-the-line mechanic.
+type WaitlistEntry struct {
+	ID           uint      `json:"id"`
+	Email        string    `json:"email"`
+	Phone        string    `json:"phone,omitempty"`
+	ReferralCode string    `json:"referral_code"`
+	ReferredBy   *string   `json:"referred_by,omitempty"`
+	Position     int       `json:"position"`
+	CreatedAt    time.Time `json:"created_at"`
+}
+
 // YieldPayout is a weekly yield distribution to an investor.
 type YieldPayout struct {
 	ID         uint      `json:"id"`

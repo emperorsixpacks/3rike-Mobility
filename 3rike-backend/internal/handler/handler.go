@@ -13,6 +13,7 @@ type Handlers struct {
 	Loan     *LoanHandler
 	Savings  *SavingsHandler
 	Yield    *YieldHandler
+	Waitlist *WaitlistHandler
 }
 
 func New(svc *service.Services) *Handlers {
@@ -26,5 +27,6 @@ func New(svc *service.Services) *Handlers {
 		Loan:     &LoanHandler{svc: svc.Loan},
 		Savings:  &SavingsHandler{svc: svc.Savings},
 		Yield:    &YieldHandler{svc: svc.Yield},
+		Waitlist: &WaitlistHandler{svc: svc.Waitlist},
 	}
 }

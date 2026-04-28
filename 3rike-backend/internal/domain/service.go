@@ -59,3 +59,9 @@ type YieldService interface {
 	GetByInvestor(ctx context.Context, investorID uint) ([]YieldPayout, error)
 	DistributeWeekly(ctx context.Context, weekNumber int) error
 }
+
+type WaitlistService interface {
+	Join(ctx context.Context, email, phone string, referredBy *string) (entry *WaitlistEntry, totalCount int64, err error)
+	Stats(ctx context.Context) (totalCount int64, err error)
+	GetByCode(ctx context.Context, code string) (entry *WaitlistEntry, totalCount int64, referralCount int64, err error)
+}

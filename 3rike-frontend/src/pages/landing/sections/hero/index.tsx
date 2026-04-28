@@ -50,6 +50,16 @@ export default function HeroSection() {
               <Button onClick={() => setOpen(true)} className="px-3 sm:px-3 md:px-3 py-6 bg-black hover:bg-[#b5b5b5] hover:text-white text-white border-white border rounded-full cursor-pointer hover:scale-105 transition-transform duration-300">
                 {t("hero.cta.secondary")} <img src="investment.svg" alt="" className="w-5 h-5" />
               </Button>
+              <Button
+                onClick={() =>
+                  document
+                    .getElementById("waitlist")
+                    ?.scrollIntoView({ behavior: "smooth" })
+                }
+                className="px-3 sm:px-3 md:px-3 py-6 bg-[#01C259] hover:bg-[#00a049] text-white rounded-full cursor-pointer hover:scale-105 transition-transform duration-300 shadow-lg shadow-[#01C259]/20"
+              >
+                Join the waitlist
+              </Button>
             </div>
           </div>
 

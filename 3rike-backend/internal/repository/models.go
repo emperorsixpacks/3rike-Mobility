@@ -93,9 +93,20 @@ type YieldPayout struct {
 	CreatedAt  time.Time
 }
 
+type WaitlistEntry struct {
+	ID           uint    `gorm:"primaryKey"`
+	Email        string  `gorm:"uniqueIndex;size:255;not null"`
+	Phone        string  `gorm:"size:32"`
+	ReferralCode string  `gorm:"uniqueIndex;size:16;not null"`
+	ReferredBy   *string `gorm:"size:16;index"`
+	Position     int     `gorm:"not null"`
+	CreatedAt    time.Time
+}
+
 func Migrate(db *gorm.DB) error {
 	return db.AutoMigrate(
 		&User{}, &Driver{}, &Investor{}, &Tricycle{},
 		&Fraction{}, &Payment{}, &Loan{}, &Savings{}, &YieldPayout{},
+		&WaitlistEntry{},
 	)
 }

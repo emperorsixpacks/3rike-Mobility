@@ -273,7 +273,7 @@ export default function DriverDashboard() {
             {/* Savings */}
             <div
               onClick={handleSavings}
-              className="bg-white border-3 border-dashed border-gray-100 rounded-2xl p-4 flex flex-col  gap-2 "
+              className="bg-white border-3 border-dashed border-gray-100 rounded-2xl p-4 flex flex-col  gap-2 cursor-pointer"
             >
               <div className="w-5 h-5 bg-white/20 rounded-lg flex items-center justify-center mb-2 backdrop-blur-md">
                 <img
@@ -288,7 +288,7 @@ export default function DriverDashboard() {
             {/* Investment */}
             <div
               onClick={handleInvestment}
-              className="bg-white border-3 border-dashed border-gray-100 rounded-2xl p-4 flex flex-col gap-2 "
+              className="bg-white border-3 border-dashed border-gray-100 rounded-2xl p-4 flex flex-col gap-2 cursor-pointer"
             >
               <div className="w-5 h-5 bg-white/20 rounded-lg flex items-center justify-center mb-2 backdrop-blur-md">
                 <img
@@ -315,7 +315,7 @@ export default function DriverDashboard() {
             {/* Loan */}
             <div
               onClick={handleLoan}
-              className="bg-white border-3 border-dashed border-gray-100 rounded-2xl p-4 flex flex-col gap-2 "
+              className="bg-white border-3 border-dashed border-gray-100 rounded-2xl p-4 flex flex-col gap-2 cursor-pointer"
             >
               <div className="w-5 h-5 bg-white/20 rounded-lg flex items-center justify-center mb-2 backdrop-blur-md">
                 <img

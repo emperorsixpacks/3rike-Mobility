@@ -65,3 +65,11 @@ type YieldPayoutRepository interface {
 	Create(ctx context.Context, y *YieldPayout) error
 	FindByInvestorID(ctx context.Context, investorID uint) ([]YieldPayout, error)
 }
+
+type WaitlistRepository interface {
+	Create(ctx context.Context, e *WaitlistEntry) error
+	FindByEmail(ctx context.Context, email string) (*WaitlistEntry, error)
+	FindByReferralCode(ctx context.Context, code string) (*WaitlistEntry, error)
+	CountReferralsBy(ctx context.Context, code string) (int64, error)
+	Count(ctx context.Context) (int64, error)
+}

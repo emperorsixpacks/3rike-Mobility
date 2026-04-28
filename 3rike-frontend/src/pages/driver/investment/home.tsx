@@ -82,7 +82,7 @@ export default function InvestmentApp() {
             <button
               type="button"
               onClick={onTabClick("fleet")}
-              className={`transition-colors ${
+              className={`transition-colors cursor-pointer ${
                 mode === "fleet" ? "text-black font-bold" : "text-[#B5B5B5]"
               }`}
             >
@@ -91,7 +91,7 @@ export default function InvestmentApp() {
             <button
               type="button"
               onClick={onTabClick("share")}
-              className={`transition-colors ${
+              className={`transition-colors cursor-pointer ${
                 mode === "share" ? "text-black font-bold" : "text-[#B5B5B5]"
               }`}
             >
@@ -122,7 +122,7 @@ export default function InvestmentApp() {
                 key={t.alt}
                 type="button"
                 onClick={() => setActiveThumb(i)}
-                className={`w-16 h-16 rounded-2xl bg-white p-1 flex items-center justify-center transition-all ${
+                className={`w-16 h-16 rounded-2xl bg-white p-1 flex items-center justify-center transition-all cursor-pointer ${
                   activeThumb === i ? "ring-2 ring-[#01C259] shadow-sm" : "border border-gray-100"
                 }`}
               >
@@ -136,7 +136,7 @@ export default function InvestmentApp() {
             <button
               type="button"
               onClick={() => setQty((q) => Math.max(1, q - 1))}
-              className="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center text-gray-500 hover:bg-gray-50 active:scale-95 transition"
+              className="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center text-gray-500 hover:bg-gray-50 active:scale-95 transition cursor-pointer"
               aria-label="Decrease"
             >
               <Minus className="w-4 h-4" />
@@ -150,7 +150,7 @@ export default function InvestmentApp() {
             <button
               type="button"
               onClick={() => setQty((q) => q + 1)}
-              className="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center text-gray-500 hover:bg-gray-50 active:scale-95 transition"
+              className="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center text-gray-500 hover:bg-gray-50 active:scale-95 transition cursor-pointer"
               aria-label="Increase"
             >
               <Plus className="w-4 h-4" />

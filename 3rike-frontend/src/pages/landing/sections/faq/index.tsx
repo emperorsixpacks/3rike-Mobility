@@ -37,7 +37,7 @@ export default function Faq() {
             <div key={index} className="bg-[#3f3f3f] text-white rounded-md overflow-hidden relative border-l-[6px] border-[#01C259]">
               <button
                 onClick={() => toggleFAQ(index)}
-                className="w-full text-left px-6 py-4 flex justify-between items-center font-semibold focus:outline-none"
+                className="w-full text-left px-6 py-4 flex justify-between items-center font-semibold focus:outline-none cursor-pointer"
               >
                 <span>{faq.q}</span>
                 <svg

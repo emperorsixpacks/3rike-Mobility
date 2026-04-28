@@ -32,6 +32,12 @@ func Register(app *fiber.App, h *handler.Handlers, cfg *config.Config, rdb *redi
 	auth.Post("/register", h.Auth.Register)
 	auth.Post("/login", h.Auth.Login)
 
+	// Waitlist (public — pre-launch landing page)
+	waitlist := app.Group("/waitlist")
+	waitlist.Post("/join", h.Waitlist.Join)
+	waitlist.Get("/stats", middleware.Cache(rdb, 30*time.Second), h.Waitlist.Stats)
+	waitlist.Get("/:code", h.Waitlist.GetByCode)
+
 	// ── User self-management (JWT required) ──────────────────────────────────
 	me := app.Group("/auth", jwtAuth)
 	me.Post("/logout", h.Auth.Logout)
