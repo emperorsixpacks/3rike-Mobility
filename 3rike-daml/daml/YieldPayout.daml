@@ -1,0 +1,21 @@
+-- YieldPayout.daml
+-- Weekly yield distribution record for investors.
+-- Operator creates one payout per investor per week.
+
+module YieldPayout where
+
+template YieldPayout
+  with
+    operator    : Party
+    investor    : Party
+    tricycleId  : Text
+    amountUSDC  : Decimal
+    weekNumber  : Int
+  where
+    signatory operator
+    observer  investor
+
+    -- Investor acknowledges receipt of yield.
+    choice AcknowledgePayout : ()
+      controller investor
+      do return ()
