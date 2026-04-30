@@ -207,6 +207,110 @@ export function getInvestor(id: number): Promise<Investor> {
 }
 
 // =============================================================================
+// Savings
+// =============================================================================
+
+export type Savings = {
+  id: number;
+  driver_id: number;
+  balance_usdc: number;
+  created_at: string;
+};
+
+export function getSavingsBalance(driverId: number): Promise<Savings> {
+  return request<Savings>(`/api/savings/${driverId}/balance`);
+}
+
+export function deposit(payload: {
+  driver_id: number;
+  amount_usdc: number;
+}): Promise<Savings> {
+  return request<Savings>("/api/savings/deposit", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+// =============================================================================
+// Payments (driver weekly repayments)
+// =============================================================================
+
+export type PaymentStatus = "pending" | "confirmed" | "failed";
+
+export type Payment = {
+  id: number;
+  driver_id: number;
+  tricycle_id: number;
+  amount_local: number;
+  amount_usdc: number;
+  currency: string;
+  status: PaymentStatus;
+  week_number: number;
+  created_at: string;
+};
+
+export function recordPayment(payload: {
+  driver_id: number;
+  tricycle_id: number;
+  amount_local: number;
+  amount_usdc: number;
+  currency: string;
+  week_number: number;
+}): Promise<Payment> {
+  return request<Payment>("/api/payments", {
+    method: "POST",
+    body: JSON.stringify({ ...payload, status: "pending" }),
+  });
+}
+
+export function listPayments(driverId: number): Promise<Payment[]> {
+  return request<Payment[]>(`/api/payments/driver/${driverId}`);
+}
+
+// =============================================================================
+// Loans
+// =============================================================================
+
+export type LoanStatus = "active" | "repaid" | "defaulted";
+
+export type Loan = {
+  id: number;
+  driver_id: number;
+  principal_usdc: number;
+  remaining_usdc: number;
+  weekly_repayment: number;
+  status: LoanStatus;
+  created_at: string;
+};
+
+/**
+ * Apply for a loan. Backend requires the driver's credit_score >= 500 — newly
+ * created drivers start at 0, so expect 422 / forbidden until repayment
+ * history bumps their score.
+ */
+export function applyForLoan(payload: {
+  driver_id: number;
+  principal_usdc: number;
+  weekly_repayment: number;
+}): Promise<Loan> {
+  return request<Loan>("/api/loans", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function getLoan(id: number): Promise<Loan> {
+  return request<Loan>(`/api/loans/${id}`);
+}
+
+export function repayLoan(id: number, amountUSDC: number): Promise<Loan> {
+  return request<Loan>(`/api/loans/${id}/repay`, {
+    method: "PUT",
+    body: JSON.stringify({ amount_usdc: amountUSDC }),
+  });
+}
+
+// =============================================================================
 // Waitlist (public — pre-launch landing page)
 // =============================================================================
 

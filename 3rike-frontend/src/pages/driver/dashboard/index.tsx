@@ -7,6 +7,7 @@ import DepositModal from "../deposit";
 import WithdrawOptions from "../withdraw/options";
 import BottomNav from "@/components/ui/bottom-nav";
 import { useAuth } from "@/lib/auth";
+import { useSavings } from "@/lib/use-savings";
 
 // Local UX states layered on top of the backend driver record:
 //   - not_started: no driver profile yet → CTA to start KYC
@@ -20,6 +21,7 @@ const POST_KYC_KEY = "3rike.postKycStatus"; // overrides only — only set after
 export default function DriverDashboard() {
   const navigate = useNavigate();
   const { user, driver } = useAuth();
+  const { balance: savingsBalance, refresh: refreshSavings } = useSavings();
   const [changeCurrency, setChangeCurrency] = useState(true);
   const [verificationStatus, setVerificationStatus] = useState<VerificationStatus>(
     () => deriveStatus(driver),
@@ -158,7 +160,9 @@ export default function DriverDashboard() {
               </div>
               <div>
                 <p className="text-xs text-gray-400 mb-1">Savings Balance</p>
-                <h3 className="text-xl font-light text-gray-800">$ 0.00</h3>
+                <h3 className="text-xl font-light text-gray-800">
+                  ${" "}{formatBalance(savingsBalance)}
+                </h3>
               </div>
             </div>
 
@@ -334,6 +338,7 @@ export default function DriverDashboard() {
       <DepositModal
         isOpen={isDepositOpen}
         onClose={() => setIsDepositOpen(false)}
+        onDeposited={refreshSavings}
       />
 
       {/* Withdraw modal */}
@@ -354,4 +359,11 @@ function deriveStatus(
   if (localStorage.getItem("verificationStatus") === "3riker") return "3riker";
   if (driver) return "approved";
   return "not_started";
+}
+
+function formatBalance(usdc: number): string {
+  return usdc.toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 }
