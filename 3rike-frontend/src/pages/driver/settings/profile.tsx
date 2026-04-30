@@ -1,21 +1,44 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, Copy, ChevronRight } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, Copy } from "lucide-react";
+import { useAuth } from "@/lib/auth";
 
 export default function SettingsProfile() {
     const navigate = useNavigate();
+    const { user, driver } = useAuth();
+    const [copied, setCopied] = useState(false);
+
+    const fullName = driver?.full_name || user?.email?.split("@")[0] || "—";
+    const firstName = fullName.split(" ")[0];
+    const phone = driver?.phone || "—";
+    const country = driver?.country || "—";
+    // Wallet address isn't yet exposed on the driver record. Keeping a
+    // placeholder until the backend exposes it (or until we add a wallet
+    // endpoint).
+    const walletAddress = "Not yet linked";
+
+    const handleCopy = async () => {
+        if (walletAddress === "Not yet linked") return;
+        try {
+            await navigator.clipboard.writeText(walletAddress);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+        } catch {
+            // ignore
+        }
+    };
 
     return (
         <div className="min-h-screen bg-[#F8FAFC] flex flex-col">
 
             {/* --- Header --- */}
-            {/* Sticky header to ensure navigation is always accessible */}
             <div className="relative flex items-center justify-center pt-12 pb-6 px-6 bg-[#F8FAFC]">
                 <Button
                     variant="ghost"
                     size="icon"
                     onClick={() => navigate(-1)}
-                    className="absolute left-6 w-10 h-10 rounded-full bg-[#F3F8F5] hover:bg-green-50 text-[#01C259] transition-colors"
+                    className="absolute left-6 w-10 h-10 rounded-full bg-[#F3F8F5] hover:bg-green-50 text-[#01C259] transition-colors cursor-pointer"
                 >
                     <ChevronLeft className="w-6 h-6" />
                 </Button>
@@ -33,16 +56,20 @@ export default function SettingsProfile() {
                     <div className="w-15 h-15 rounded-full bg-gray-200 overflow-hidden border-2 border-white">
                         <img className="w-15 h-15" src="/profile.png" alt="User" />
                     </div>
-                    <h2 className="text-gray-500 font-medium text-base">Effiong</h2>
+                    <h2 className="text-gray-500 font-medium text-base">{firstName}</h2>
                 </div>
 
                 {/* Wallet Address Card */}
                 <div className="w-full bg-white rounded-xl p-4 flex items-center justify-between">
                     <span className="text-gray-900 font-medium text-sm">3rike Wallet Address</span>
                     <div className="flex items-center gap-3">
-                        <span className="text-gray-400 text-sm">0xbbcvvcvcvvc</span>
-                        <button className="text-gray-400 hover:text-gray-600 transition-colors">
-                            <Copy className="w-5 h-5" />
+                        <span className="text-gray-400 text-sm truncate max-w-40">{walletAddress}</span>
+                        <button
+                            onClick={handleCopy}
+                            className="text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
+                            aria-label="Copy wallet address"
+                        >
+                            {copied ? <Check className="w-5 h-5 text-[#01C259]" /> : <Copy className="w-5 h-5" />}
                         </button>
                     </div>
                 </div>
@@ -50,19 +77,31 @@ export default function SettingsProfile() {
                 {/* Personal Details Card */}
                 <div className="w-full bg-white rounded-xl overflow-hidden">
 
-                    {/* Full Name Row */}
+                    {/* Full Name */}
                     <div className="flex items-center justify-between p-3 border-b border-gray-50">
                         <span className="text-gray-900 font-medium text-sm">Full Name</span>
-                        <span className="text-gray-400 text-sm">Effiong Musa</span>
+                        <span className="text-gray-400 text-sm">{fullName}</span>
                     </div>
 
-                    {/* Mobile Number Row */}
+                    {/* Email */}
+                    <div className="flex items-center justify-between p-3 border-b border-gray-50">
+                        <span className="text-gray-900 font-medium text-sm">Email</span>
+                        <span className="text-gray-400 text-sm truncate max-w-40">{user?.email ?? "—"}</span>
+                    </div>
+
+                    {/* Mobile Number */}
                     <div className="flex items-center justify-between p-3 border-b border-gray-50">
                         <span className="text-gray-900 font-medium text-sm">Mobile Number</span>
-                        <span className="text-gray-400 text-sm">02028287</span>
+                        <span className="text-gray-400 text-sm">{phone}</span>
                     </div>
 
-                    {/* Address Row (Clickable) */}
+                    {/* Country */}
+                    <div className="flex items-center justify-between p-3 border-b border-gray-50">
+                        <span className="text-gray-900 font-medium text-sm">Country</span>
+                        <span className="text-gray-400 text-sm">{country}</span>
+                    </div>
+
+                    {/* Address (Clickable, future) */}
                     <div
                         onClick={() => {/* Handle address edit/view */ }}
                         className="flex items-center justify-between p-3 cursor-pointer hover:bg-gray-50 transition-colors"

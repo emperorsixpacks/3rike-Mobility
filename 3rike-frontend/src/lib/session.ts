@@ -8,6 +8,8 @@
 
 const TOKEN_KEY = "3rike.token";
 const SESSION_ID_KEY = "3rike.sessionId";
+const DRIVER_ID_KEY = "3rike.driverId";
+const INVESTOR_ID_KEY = "3rike.investorId";
 
 export type StoredSession = {
   token: string;
@@ -29,8 +31,40 @@ export function setSession(s: StoredSession): void {
 export function clearSession(): void {
   localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(SESSION_ID_KEY);
+  localStorage.removeItem(DRIVER_ID_KEY);
+  localStorage.removeItem(INVESTOR_ID_KEY);
 }
 
 export function getToken(): string | null {
   return localStorage.getItem(TOKEN_KEY);
+}
+
+// Profile IDs are cached locally so we can fetch the user's driver/investor
+// record on boot without an N+1 lookup. The cached ID is verified on every
+// boot via GET /api/{drivers|investors}/{id}; if it 404s we drop it.
+
+export function getDriverId(): number | null {
+  const raw = localStorage.getItem(DRIVER_ID_KEY);
+  return raw ? Number(raw) : null;
+}
+
+export function setDriverId(id: number): void {
+  localStorage.setItem(DRIVER_ID_KEY, String(id));
+}
+
+export function clearDriverId(): void {
+  localStorage.removeItem(DRIVER_ID_KEY);
+}
+
+export function getInvestorId(): number | null {
+  const raw = localStorage.getItem(INVESTOR_ID_KEY);
+  return raw ? Number(raw) : null;
+}
+
+export function setInvestorId(id: number): void {
+  localStorage.setItem(INVESTOR_ID_KEY, String(id));
+}
+
+export function clearInvestorId(): void {
+  localStorage.removeItem(INVESTOR_ID_KEY);
 }

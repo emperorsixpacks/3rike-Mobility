@@ -1,18 +1,31 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { 
-  User, 
-  Lock, 
-  Key, 
-  Snowflake, 
-  MessageCircle, 
-  X, 
-  Info, 
-  ChevronRight, 
+import {
+  User,
+  Lock,
+  Key,
+  Snowflake,
+  MessageCircle,
+  X,
+  Info,
+  ChevronRight,
 } from "lucide-react";
+import { useAuth } from "@/lib/auth";
 
 export default function SettingsHome() {
     const navigate = useNavigate();
+    const { logout } = useAuth();
+    const [signingOut, setSigningOut] = useState(false);
+
+    const handleSignOut = async () => {
+        setSigningOut(true);
+        try {
+            await logout();
+        } finally {
+            setSigningOut(false);
+        }
+    };
 
     // Helper component for individual menu items
     const MenuItem = ({ icon: Icon, label, onClick }: any) => (
@@ -117,9 +130,11 @@ export default function SettingsHome() {
             {/* --- Footer Button --- */}
             <div className="absolute bottom-15 left-0 right-0 p-6 bg-white/80 backdrop-blur-sm">
                 <Button
-                    className="w-full py-6 rounded-xl bg-[#01C259] hover:bg-[#01b050] text-white text-lg font-light shadow-md transition-all active:scale-[0.98]"
+                    onClick={handleSignOut}
+                    disabled={signingOut}
+                    className="w-full py-6 rounded-xl bg-[#01C259] hover:bg-[#01b050] text-white text-lg font-light shadow-md transition-all active:scale-[0.98] cursor-pointer disabled:opacity-60"
                 >
-                    Sign Out
+                    {signingOut ? "Signing out…" : "Sign Out"}
                 </Button>
             </div>
 

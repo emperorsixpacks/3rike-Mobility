@@ -6,40 +6,50 @@ import { ArrowUpRight, Plus, Hourglass } from "lucide-react";
 import DepositModal from "../deposit";
 import WithdrawOptions from "../withdraw/options";
 import BottomNav from "@/components/ui/bottom-nav";
+import { useAuth } from "@/lib/auth";
+
+// Local UX states layered on top of the backend driver record:
+//   - not_started: no driver profile yet → CTA to start KYC
+//   - in_progress: just submitted KYC → brief "we'll get back to you" beat
+//   - approved:    KYC done, can buy a 3rike (Own a 3rike CTA)
+//   - 3riker:      already owns a 3rike (My future 3rike CTA)
+type VerificationStatus = "not_started" | "in_progress" | "approved" | "3riker";
+
+const POST_KYC_KEY = "3rike.postKycStatus"; // overrides only — only set after a fresh KYC submit
 
 export default function DriverDashboard() {
   const navigate = useNavigate();
+  const { user, driver } = useAuth();
   const [changeCurrency, setChangeCurrency] = useState(true);
-  const [verificationStatus, setVerificationStatus] = useState<
-    "not_started" | "in_progress" | "approved" | "3riker"
-  >("not_started");
+  const [verificationStatus, setVerificationStatus] = useState<VerificationStatus>(
+    () => deriveStatus(driver),
+  );
 
   // State to control the modals
   const [isDepositOpen, setIsDepositOpen] = useState(false);
   const [isWithdrawOpen, setIsWithdrawOpen] = useState(false);
 
+  // Re-derive when the driver profile changes (e.g. after KYC).
   useEffect(() => {
-    const status = localStorage.getItem("verificationStatus") as
-      | "not_started"
-      | "in_progress"
-      | "approved"
-      | "3riker";
-
-    if (status) {
-      setVerificationStatus(status);
+    // Honor an in-flight "in_progress" override briefly after KYC submit.
+    const override = localStorage.getItem(POST_KYC_KEY);
+    if (override === "in_progress" && driver) {
+      setVerificationStatus("in_progress");
+      return;
     }
-  }, []);
+    setVerificationStatus(deriveStatus(driver));
+  }, [driver]);
 
   // Auto-transition: in_progress -> approved after ~2s so the user sees the
   // "Verification in Progress" banner briefly before unlocking "Own a 3rike".
   useEffect(() => {
     if (verificationStatus !== "in_progress") return;
     const t = setTimeout(() => {
-      setVerificationStatus("approved");
-      localStorage.setItem("verificationStatus", "approved");
+      localStorage.removeItem(POST_KYC_KEY);
+      setVerificationStatus(driver ? "approved" : "not_started");
     }, 2000);
     return () => clearTimeout(t);
-  }, [verificationStatus]);
+  }, [verificationStatus, driver]);
 
   const handleLoan = () => {
     navigate("/driver/loan");
@@ -74,7 +84,7 @@ export default function DriverDashboard() {
               <img src="/profile.png" alt="User" />
             </div>
             <span className="font-light text-sm -mr-5">
-              Welcome, Effiong Musa
+              Welcome, {driver?.full_name || user?.email || "rider"}
             </span>
             <Button variant="link">
               <img src="arrow.svg" alt="Arrow" className="w-5 h-5" />
@@ -163,18 +173,6 @@ export default function DriverDashboard() {
               </div>
             </div>
           </div>
-
-          {/* to simulate approval */}
-          <button
-            type="button"
-            onClick={() => {
-              setVerificationStatus("approved");
-              localStorage.setItem("verificationStatus", "approved");
-            }}
-            className="ml-2 text-xs text-[#1B8036] underline hover:[#1B8036] bg-transparent border-none cursor-pointer"
-          >
-            (Simulate Approval)
-          </button>
 
           {/* 3. VERIFICATION BANNER */}
           {verificationStatus === "3riker" ? (
@@ -345,4 +343,15 @@ export default function DriverDashboard() {
       />
     </div>
   );
+}
+
+// Maps the backend driver record onto the dashboard's UX states. The
+// "3riker" state (already owns a 3rike) isn't yet reflected on the backend
+// — kept as a localStorage flag until we have a Tricycle ownership endpoint.
+function deriveStatus(
+  driver: { id: number } | null,
+): "not_started" | "in_progress" | "approved" | "3riker" {
+  if (localStorage.getItem("verificationStatus") === "3riker") return "3riker";
+  if (driver) return "approved";
+  return "not_started";
 }

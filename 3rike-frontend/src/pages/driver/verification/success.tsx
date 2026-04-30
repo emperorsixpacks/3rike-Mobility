@@ -7,7 +7,10 @@ export default function VerificationSuccess() {
   const navigate = useNavigate();
 
   const goToDashboard = () => {
-    localStorage.setItem("verificationStatus", "in_progress");
+    // Briefly hold the dashboard in the "Verification in Progress" state so
+    // the user sees a moment of acknowledgement before it flips to "Own a
+    // 3rike". The dashboard clears this flag on its 2s auto-transition.
+    localStorage.setItem("3rike.postKycStatus", "in_progress");
     navigate("/driver");
   };
 

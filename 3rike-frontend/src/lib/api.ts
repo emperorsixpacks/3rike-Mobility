@@ -147,6 +147,66 @@ export function logout(): Promise<void> {
 }
 
 // =============================================================================
+// Drivers
+// =============================================================================
+
+export type Driver = {
+  id: number;
+  user_id: number;
+  full_name: string;
+  phone: string;
+  country: string;
+  credit_score: number;
+  weeks_remaining: number;
+  created_at: string;
+};
+
+export function createDriver(payload: {
+  full_name: string;
+  phone: string;
+  country: string;
+}): Promise<Driver> {
+  return request<Driver>("/api/drivers", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function getDriver(id: number): Promise<Driver> {
+  return request<Driver>(`/api/drivers/${id}`);
+}
+
+export function listDrivers(): Promise<Driver[]> {
+  return request<Driver[]>("/api/drivers");
+}
+
+// =============================================================================
+// Investors
+// =============================================================================
+
+export type Investor = {
+  id: number;
+  user_id: number;
+  full_name: string;
+  wallet_address: string;
+  created_at: string;
+};
+
+export function createInvestor(payload: {
+  full_name: string;
+  wallet_address: string;
+}): Promise<Investor> {
+  return request<Investor>("/api/investors", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function getInvestor(id: number): Promise<Investor> {
+  return request<Investor>(`/api/investors/${id}`);
+}
+
+// =============================================================================
 // Waitlist (public — pre-launch landing page)
 // =============================================================================
 

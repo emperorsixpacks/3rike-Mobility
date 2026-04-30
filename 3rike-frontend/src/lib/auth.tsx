@@ -1,6 +1,7 @@
-// AuthProvider holds the resolved User in memory and exposes login/register/
-// logout helpers. On boot, if a JWT exists in storage, it calls /auth/me to
-// resolve the user. Listens for global 401s (from api.ts) and clears state.
+// AuthProvider holds the resolved User + role-specific profile (Driver or
+// Investor) in memory. On boot, if a JWT exists, it calls /auth/me and then —
+// if a cached profile id exists — fetches the profile too. Listens for global
+// 401s (from api.ts) and clears state.
 
 import {
   createContext,
@@ -16,65 +17,144 @@ import { useNavigate } from "react-router-dom";
 import {
   ApiError,
   UNAUTHORIZED_EVENT,
+  createDriver as apiCreateDriver,
+  createInvestor as apiCreateInvestor,
+  getDriver as apiGetDriver,
+  getInvestor as apiGetInvestor,
+  listDrivers as apiListDrivers,
   login as apiLogin,
   logout as apiLogout,
   me as apiMe,
   register as apiRegister,
+  type Driver,
+  type Investor,
   type Role,
   type User,
 } from "./api";
-import { clearSession, getSession, setSession } from "./session";
+import {
+  clearDriverId,
+  clearInvestorId,
+  clearSession,
+  getDriverId,
+  getInvestorId,
+  getSession,
+  setDriverId,
+  setInvestorId,
+  setSession,
+} from "./session";
 
 type AuthState =
-  | { status: "loading"; user: null }
-  | { status: "authenticated"; user: User }
-  | { status: "anonymous"; user: null };
+  | { status: "loading"; user: null; driver: null; investor: null }
+  | { status: "authenticated"; user: User; driver: Driver | null; investor: Investor | null }
+  | { status: "anonymous"; user: null; driver: null; investor: null };
 
 type AuthContextValue = {
   state: AuthState;
   user: User | null;
+  driver: Driver | null;
+  investor: Investor | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  /** True when authed but no role-specific profile yet (KYC pending). */
+  needsOnboarding: boolean;
   login: (email: string, password: string) => Promise<User>;
   register: (email: string, password: string, role: Role) => Promise<User>;
   logout: () => Promise<void>;
   refresh: () => Promise<User | null>;
+  createDriverProfile: (payload: {
+    full_name: string;
+    phone: string;
+    country: string;
+  }) => Promise<Driver>;
+  createInvestorProfile: (payload: {
+    full_name: string;
+    wallet_address: string;
+  }) => Promise<Investor>;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
+const initialAnon: AuthState = { status: "anonymous", user: null, driver: null, investor: null };
+const initialLoading: AuthState = { status: "loading", user: null, driver: null, investor: null };
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const [state, setState] = useState<AuthState>(() =>
-    getSession() ? { status: "loading", user: null } : { status: "anonymous", user: null },
+    getSession() ? initialLoading : initialAnon,
   );
 
-  // Hold the latest navigate fn in a ref so the 401 listener can use it
-  // without resubscribing on every render.
   const navigateRef = useRef(navigate);
   navigateRef.current = navigate;
 
+  // Resolve the cached profile (driver or investor) for the given user. We
+  // tolerate failures here — if the cached id is stale we drop it but keep
+  // the user logged in (they just need to re-onboard).
+  const loadProfile = useCallback(
+    async (user: User): Promise<{ driver: Driver | null; investor: Investor | null }> => {
+      if (user.role === "driver") {
+        const id = getDriverId();
+        if (id) {
+          try {
+            const driver = await apiGetDriver(id);
+            return { driver, investor: null };
+          } catch {
+            clearDriverId();
+            // fall through to discovery below
+          }
+        }
+        // No cached id (or stale one): discover by listing and filtering by
+        // user_id. The backend has no /api/drivers/me endpoint yet — once it
+        // does, swap this for a single GET. Failures here are non-fatal:
+        // user stays logged in but in the "needs onboarding" branch.
+        try {
+          const all = await apiListDrivers();
+          const mine = all.find((d) => d.user_id === user.id);
+          if (mine) {
+            setDriverId(mine.id);
+            return { driver: mine, investor: null };
+          }
+        } catch {
+          // ignore — pre-onboarding state
+        }
+        return { driver: null, investor: null };
+      }
+      if (user.role === "investor") {
+        const id = getInvestorId();
+        if (!id) return { driver: null, investor: null };
+        try {
+          const investor = await apiGetInvestor(id);
+          return { driver: null, investor };
+        } catch {
+          clearInvestorId();
+          return { driver: null, investor: null };
+        }
+      }
+      return { driver: null, investor: null };
+    },
+    [],
+  );
+
   const refresh = useCallback(async (): Promise<User | null> => {
     if (!getSession()) {
-      setState({ status: "anonymous", user: null });
+      setState(initialAnon);
       return null;
     }
     try {
       const user = await apiMe();
-      setState({ status: "authenticated", user });
+      const { driver, investor } = await loadProfile(user);
+      setState({ status: "authenticated", user, driver, investor });
       return user;
     } catch (err) {
-      // Any failure on /me means the token is no good.
       clearSession();
-      setState({ status: "anonymous", user: null });
+      setState(initialAnon);
       if (err instanceof ApiError && err.status === 401) {
-        // Already cleared by api.ts, but keep flow consistent.
+        // already cleared by api.ts; flow stays consistent.
       }
       return null;
     }
-  }, []);
+  }, [loadProfile]);
 
-  // Boot: resolve the user if we have a stored token.
+  // Boot once on mount.
   useEffect(() => {
     if (state.status === "loading") {
       void refresh();
@@ -82,32 +162,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Global 401 listener: drop user state and bounce to /login.
+  // Global 401 listener.
   useEffect(() => {
     const handler = () => {
-      setState({ status: "anonymous", user: null });
+      setState(initialAnon);
       navigateRef.current("/login", { replace: true });
     };
     window.addEventListener(UNAUTHORIZED_EVENT, handler);
     return () => window.removeEventListener(UNAUTHORIZED_EVENT, handler);
   }, []);
 
-  const login = useCallback(async (email: string, password: string) => {
-    const { token, session_id } = await apiLogin({ email, password });
-    setSession({ token, sessionId: session_id });
-    const user = await apiMe();
-    setState({ status: "authenticated", user });
-    return user;
-  }, []);
+  const login = useCallback(
+    async (email: string, password: string) => {
+      const { token, session_id } = await apiLogin({ email, password });
+      setSession({ token, sessionId: session_id });
+      const user = await apiMe();
+      const { driver, investor } = await loadProfile(user);
+      setState({ status: "authenticated", user, driver, investor });
+      return user;
+    },
+    [loadProfile],
+  );
 
   const register = useCallback(
     async (email: string, password: string, role: Role) => {
       const user = await apiRegister({ email, password, role });
-      // Backend's register returns the user but no token — log the user in
-      // immediately so the app is in an authenticated state on success.
+      // Backend's register doesn't return a token — log in immediately.
       const { token, session_id } = await apiLogin({ email, password });
       setSession({ token, sessionId: session_id });
-      setState({ status: "authenticated", user });
+      // Newly-registered users have no profile yet (needs onboarding).
+      setState({ status: "authenticated", user, driver: null, investor: null });
       return user;
     },
     [],
@@ -117,26 +201,60 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       await apiLogout();
     } catch {
-      // Best-effort — even if the server call fails, drop local state.
+      // best-effort
     }
     clearSession();
-    setState({ status: "anonymous", user: null });
+    setState(initialAnon);
     navigate("/login", { replace: true });
   }, [navigate]);
 
-  const value = useMemo<AuthContextValue>(
-    () => ({
+  const createDriverProfile = useCallback(
+    async (payload: { full_name: string; phone: string; country: string }) => {
+      const driver = await apiCreateDriver(payload);
+      setDriverId(driver.id);
+      setState((prev) =>
+        prev.status === "authenticated"
+          ? { ...prev, driver }
+          : prev,
+      );
+      return driver;
+    },
+    [],
+  );
+
+  const createInvestorProfile = useCallback(
+    async (payload: { full_name: string; wallet_address: string }) => {
+      const investor = await apiCreateInvestor(payload);
+      setInvestorId(investor.id);
+      setState((prev) =>
+        prev.status === "authenticated"
+          ? { ...prev, investor }
+          : prev,
+      );
+      return investor;
+    },
+    [],
+  );
+
+  const value = useMemo<AuthContextValue>(() => {
+    const isAuthed = state.status === "authenticated";
+    const hasProfile = isAuthed && (state.driver !== null || state.investor !== null);
+    return {
       state,
       user: state.user,
-      isAuthenticated: state.status === "authenticated",
+      driver: state.driver,
+      investor: state.investor,
+      isAuthenticated: isAuthed,
       isLoading: state.status === "loading",
+      needsOnboarding: isAuthed && !hasProfile,
       login,
       register,
       logout,
       refresh,
-    }),
-    [state, login, register, logout, refresh],
-  );
+      createDriverProfile,
+      createInvestorProfile,
+    };
+  }, [state, login, register, logout, refresh, createDriverProfile, createInvestorProfile]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
