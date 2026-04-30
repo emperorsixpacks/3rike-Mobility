@@ -1,5 +1,110 @@
-basePath: /
 definitions:
+  domain.Driver:
+    properties:
+      country:
+        type: string
+      created_at:
+        type: string
+      credit_score:
+        type: integer
+      full_name:
+        type: string
+      id:
+        type: integer
+      phone:
+        type: string
+      user_id:
+        type: integer
+      weeks_remaining:
+        description: out of 70
+        type: integer
+    type: object
+  domain.Fraction:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: integer
+      investor_id:
+        type: integer
+      price_per_unit:
+        type: number
+      tricycle_id:
+        type: integer
+      units:
+        type: integer
+    type: object
+  domain.Investor:
+    properties:
+      created_at:
+        type: string
+      full_name:
+        type: string
+      id:
+        type: integer
+      user_id:
+        type: integer
+      wallet_address:
+        type: string
+    type: object
+  domain.Loan:
+    properties:
+      created_at:
+        type: string
+      driver_id:
+        type: integer
+      id:
+        type: integer
+      principal_usdc:
+        type: number
+      remaining_usdc:
+        type: number
+      status:
+        $ref: '#/definitions/domain.LoanStatus'
+      weekly_repayment:
+        type: number
+    type: object
+  domain.LoanStatus:
+    enum:
+    - active
+    - repaid
+    - defaulted
+    type: string
+    x-enum-varnames:
+    - LoanActive
+    - LoanRepaid
+    - LoanDefaulted
+  domain.Payment:
+    properties:
+      amount_local:
+        type: number
+      amount_usdc:
+        type: number
+      created_at:
+        type: string
+      currency:
+        type: string
+      driver_id:
+        type: integer
+      id:
+        type: integer
+      status:
+        $ref: '#/definitions/domain.PaymentStatus'
+      tricycle_id:
+        type: integer
+      week_number:
+        type: integer
+    type: object
+  domain.PaymentStatus:
+    enum:
+    - pending
+    - confirmed
+    - failed
+    type: string
+    x-enum-varnames:
+    - PaymentPending
+    - PaymentConfirmed
+    - PaymentFailed
   domain.Role:
     enum:
     - driver
@@ -10,6 +115,68 @@ definitions:
     - RoleDriver
     - RoleInvestor
     - RoleAdmin
+  domain.Savings:
+    properties:
+      balance_usdc:
+        type: number
+      created_at:
+        type: string
+      driver_id:
+        type: integer
+      id:
+        type: integer
+    type: object
+  domain.Session:
+    properties:
+      created_at:
+        type: string
+      expires_at:
+        type: string
+      id:
+        type: string
+      role:
+        $ref: '#/definitions/domain.Role'
+      user_id:
+        type: integer
+    type: object
+  domain.Tricycle:
+    properties:
+      contract_id:
+        description: Canton ledger contract ID
+        type: string
+      created_at:
+        type: string
+      driver_id:
+        type: integer
+      id:
+        type: integer
+      is_ev:
+        type: boolean
+      make:
+        type: string
+      model:
+        type: string
+      price_usd:
+        type: number
+      status:
+        $ref: '#/definitions/domain.TricycleStatus'
+      total_fractions:
+        type: integer
+    type: object
+  domain.TricycleStatus:
+    enum:
+    - available
+    - financing
+    - owned
+    - tokenized
+    - fractionalized
+    type: string
+    x-enum-varnames:
+    - StatusAvailable
+    - StatusFinancing
+    - StatusOwned
+    - StatusTokenized
+    - StatusFractionalized
   domain.User:
     properties:
       created_at:
@@ -21,16 +188,428 @@ definitions:
       role:
         $ref: '#/definitions/domain.Role'
     type: object
-host: localhost:8080
+  domain.YieldPayout:
+    properties:
+      amount_usdc:
+        type: number
+      created_at:
+        type: string
+      fraction_id:
+        type: integer
+      id:
+        type: integer
+      investor_id:
+        type: integer
+      week_number:
+        type: integer
+    type: object
 info:
-  contact:
-    name: 3riKE Team
-    url: https://3rike.xyz
-  description: Real-world asset platform — tricycle ownership financing, tokenization,
-    and investor yield.
-  title: 3riKE API
-  version: "1.0"
+  contact: {}
 paths:
+  /api/drivers:
+    get:
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/domain.Driver'
+            type: array
+      security:
+      - BearerAuth: []
+      summary: List all drivers
+      tags:
+      - drivers
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Driver
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/domain.Driver'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/domain.Driver'
+      security:
+      - BearerAuth: []
+      summary: Create driver profile
+      tags:
+      - drivers
+  /api/drivers/{id}:
+    get:
+      parameters:
+      - description: Driver ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.Driver'
+      security:
+      - BearerAuth: []
+      summary: Get driver by ID
+      tags:
+      - drivers
+  /api/investors:
+    get:
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/domain.Investor'
+            type: array
+      security:
+      - BearerAuth: []
+      summary: List all investors
+      tags:
+      - investors
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Investor
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/domain.Investor'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/domain.Investor'
+      security:
+      - BearerAuth: []
+      summary: Create investor profile
+      tags:
+      - investors
+  /api/investors/{id}:
+    get:
+      parameters:
+      - description: Investor ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.Investor'
+      security:
+      - BearerAuth: []
+      summary: Get investor by ID
+      tags:
+      - investors
+  /api/investors/{id}/investments:
+    get:
+      parameters:
+      - description: Investor ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/domain.Fraction'
+            type: array
+      security:
+      - BearerAuth: []
+      summary: List all fractions (investments) owned by an investor
+      tags:
+      - investors
+  /api/loans:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Loan
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/domain.Loan'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/domain.Loan'
+      security:
+      - BearerAuth: []
+      summary: Apply for a loan (requires credit score >= 500)
+      tags:
+      - loans
+  /api/loans/{id}:
+    get:
+      parameters:
+      - description: Loan ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.Loan'
+      security:
+      - BearerAuth: []
+      summary: Get loan by ID
+      tags:
+      - loans
+  /api/loans/{id}/repay:
+    put:
+      parameters:
+      - description: Loan ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Repayment
+        in: body
+        name: body
+        required: true
+        schema:
+          properties:
+            amount_usdc:
+              type: number
+          type: object
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.Loan'
+      security:
+      - BearerAuth: []
+      summary: Make a loan repayment
+      tags:
+      - loans
+  /api/payments:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Payment
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/domain.Payment'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/domain.Payment'
+      security:
+      - BearerAuth: []
+      summary: Record a driver weekly repayment
+      tags:
+      - payments
+  /api/payments/driver/{driverID}:
+    get:
+      parameters:
+      - description: Driver ID
+        in: path
+        name: driverID
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/domain.Payment'
+            type: array
+      security:
+      - BearerAuth: []
+      summary: Get all payments for a driver
+      tags:
+      - payments
+  /api/savings/{driverID}/balance:
+    get:
+      parameters:
+      - description: Driver ID
+        in: path
+        name: driverID
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.Savings'
+      security:
+      - BearerAuth: []
+      summary: Get savings balance for a driver
+      tags:
+      - savings
+  /api/savings/deposit:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Deposit
+        in: body
+        name: body
+        required: true
+        schema:
+          properties:
+            amount_usdc:
+              type: number
+            driver_id:
+              type: integer
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.Savings'
+      security:
+      - BearerAuth: []
+      summary: Deposit USDC into driver savings account
+      tags:
+      - savings
+  /api/tricycles:
+    get:
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/domain.Tricycle'
+            type: array
+      security:
+      - BearerAuth: []
+      summary: List all tricycles
+      tags:
+      - tricycles
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Tricycle
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/domain.Tricycle'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/domain.Tricycle'
+      security:
+      - BearerAuth: []
+      summary: Register a new tricycle
+      tags:
+      - tricycles
+  /api/tricycles/{id}:
+    get:
+      parameters:
+      - description: Tricycle ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.Tricycle'
+      security:
+      - BearerAuth: []
+      summary: Get tricycle by ID
+      tags:
+      - tricycles
+  /api/tricycles/{id}/fractionalize:
+    post:
+      parameters:
+      - description: Tricycle ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Fractions
+        in: body
+        name: body
+        required: true
+        schema:
+          properties:
+            total_fractions:
+              type: integer
+          type: object
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.Tricycle'
+      security:
+      - BearerAuth: []
+      summary: Fractionalize a tokenized tricycle into investor shares
+      tags:
+      - tricycles
+  /api/tricycles/{id}/tokenize:
+    post:
+      parameters:
+      - description: Tricycle ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.Tricycle'
+      security:
+      - BearerAuth: []
+      summary: Tokenize a tricycle on the Canton ledger
+      tags:
+      - tricycles
+  /api/yield/investor/{investorID}:
+    get:
+      parameters:
+      - description: Investor ID
+        in: path
+        name: investorID
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/domain.YieldPayout'
+            type: array
+      security:
+      - BearerAuth: []
+      summary: Get all yield payouts for an investor
+      tags:
+      - yield
   /auth/account:
     delete:
       responses: {}
@@ -39,6 +618,54 @@ paths:
       summary: Delete own account
       tags:
       - user
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Login
+        in: body
+        name: body
+        required: true
+        schema:
+          properties:
+            email:
+              type: string
+            password:
+              type: string
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Login and get JWT + session
+      tags:
+      - auth
+  /auth/logout:
+    post:
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Logout current session
+      tags:
+      - auth
   /auth/me:
     get:
       responses:
@@ -78,10 +705,72 @@ paths:
       summary: Update email / profile
       tags:
       - user
-securityDefinitions:
-  BearerAuth:
-    description: Type "Bearer <token>"
-    in: header
-    name: Authorization
-    type: apiKey
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Register
+        in: body
+        name: body
+        required: true
+        schema:
+          properties:
+            email:
+              type: string
+            password:
+              type: string
+            role:
+              type: string
+          type: object
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/domain.User'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Register a new user
+      tags:
+      - auth
+  /auth/sessions:
+    get:
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/domain.Session'
+            type: array
+      security:
+      - BearerAuth: []
+      summary: List all active sessions for current user
+      tags:
+      - auth
+  /auth/sessions/{sessionID}:
+    delete:
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionID
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Revoke a specific session (log out other device)
+      tags:
+      - auth
 swagger: "2.0"

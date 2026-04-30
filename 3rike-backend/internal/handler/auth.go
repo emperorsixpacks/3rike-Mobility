@@ -7,6 +7,15 @@ import (
 
 type AuthHandler struct{ svc domain.AuthService }
 
+// Register godoc
+// @Summary      Register a new user
+// @Tags         auth
+// @Accept       json
+// @Produce      json
+// @Param        body  body      object{email=string,password=string,role=string}  true  "Register"
+// @Success      201   {object}  domain.User
+// @Failure      422   {object}  map[string]string
+// @Router       /auth/register [post]
 func (h *AuthHandler) Register(c *fiber.Ctx) error {
 	var body struct {
 		Email    string      `json:"email"`
@@ -23,6 +32,15 @@ func (h *AuthHandler) Register(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusCreated).JSON(user)
 }
 
+// Login godoc
+// @Summary      Login and get JWT + session
+// @Tags         auth
+// @Accept       json
+// @Produce      json
+// @Param        body  body      object{email=string,password=string}  true  "Login"
+// @Success      200   {object}  map[string]string
+// @Failure      401   {object}  map[string]string
+// @Router       /auth/login [post]
 func (h *AuthHandler) Login(c *fiber.Ctx) error {
 	var body struct {
 		Email    string `json:"email"`
@@ -38,6 +56,12 @@ func (h *AuthHandler) Login(c *fiber.Ctx) error {
 	return c.JSON(fiber.Map{"token": token, "session_id": sessionID})
 }
 
+// Logout godoc
+// @Summary      Logout current session
+// @Tags         auth
+// @Security     BearerAuth
+// @Success      200  {object}  map[string]string
+// @Router       /auth/logout [post]
 func (h *AuthHandler) Logout(c *fiber.Ctx) error {
 	userID := c.Locals("userID").(uint)
 	sessionID, _ := c.Locals("sessionID").(string)
@@ -47,6 +71,12 @@ func (h *AuthHandler) Logout(c *fiber.Ctx) error {
 	return c.JSON(fiber.Map{"message": "logged out"})
 }
 
+// ListSessions godoc
+// @Summary      List all active sessions for current user
+// @Tags         auth
+// @Security     BearerAuth
+// @Success      200  {array}   domain.Session
+// @Router       /auth/sessions [get]
 func (h *AuthHandler) ListSessions(c *fiber.Ctx) error {
 	userID := c.Locals("userID").(uint)
 	sessions, err := h.svc.ListSessions(c.Context(), userID)
@@ -56,6 +86,13 @@ func (h *AuthHandler) ListSessions(c *fiber.Ctx) error {
 	return c.JSON(sessions)
 }
 
+// RevokeSession godoc
+// @Summary      Revoke a specific session (log out other device)
+// @Tags         auth
+// @Security     BearerAuth
+// @Param        sessionID  path  string  true  "Session ID"
+// @Success      200        {object}  map[string]string
+// @Router       /auth/sessions/{sessionID} [delete]
 func (h *AuthHandler) RevokeSession(c *fiber.Ctx) error {
 	userID := c.Locals("userID").(uint)
 	sessionID := c.Params("sessionID")

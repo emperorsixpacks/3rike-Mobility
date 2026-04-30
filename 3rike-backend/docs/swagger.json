@@ -1,17 +1,678 @@
 {
     "swagger": "2.0",
     "info": {
-        "description": "Real-world asset platform — tricycle ownership financing, tokenization, and investor yield.",
-        "title": "3riKE API",
-        "contact": {
-            "name": "3riKE Team",
-            "url": "https://3rike.xyz"
-        },
-        "version": "1.0"
+        "contact": {}
     },
-    "host": "localhost:8080",
-    "basePath": "/",
     "paths": {
+        "/api/drivers": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "tags": [
+                    "drivers"
+                ],
+                "summary": "List all drivers",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/domain.Driver"
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "drivers"
+                ],
+                "summary": "Create driver profile",
+                "parameters": [
+                    {
+                        "description": "Driver",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/domain.Driver"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/domain.Driver"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/drivers/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "tags": [
+                    "drivers"
+                ],
+                "summary": "Get driver by ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Driver ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/domain.Driver"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/investors": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "tags": [
+                    "investors"
+                ],
+                "summary": "List all investors",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/domain.Investor"
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "investors"
+                ],
+                "summary": "Create investor profile",
+                "parameters": [
+                    {
+                        "description": "Investor",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/domain.Investor"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/domain.Investor"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/investors/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "tags": [
+                    "investors"
+                ],
+                "summary": "Get investor by ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Investor ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/domain.Investor"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/investors/{id}/investments": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "tags": [
+                    "investors"
+                ],
+                "summary": "List all fractions (investments) owned by an investor",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Investor ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/domain.Fraction"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/loans": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "loans"
+                ],
+                "summary": "Apply for a loan (requires credit score \u003e= 500)",
+                "parameters": [
+                    {
+                        "description": "Loan",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/domain.Loan"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/domain.Loan"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/loans/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "tags": [
+                    "loans"
+                ],
+                "summary": "Get loan by ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Loan ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/domain.Loan"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/loans/{id}/repay": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "tags": [
+                    "loans"
+                ],
+                "summary": "Make a loan repayment",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Loan ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Repayment",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "amount_usdc": {
+                                    "type": "number"
+                                }
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/domain.Loan"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/payments": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "payments"
+                ],
+                "summary": "Record a driver weekly repayment",
+                "parameters": [
+                    {
+                        "description": "Payment",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/domain.Payment"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/domain.Payment"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/payments/driver/{driverID}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "tags": [
+                    "payments"
+                ],
+                "summary": "Get all payments for a driver",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Driver ID",
+                        "name": "driverID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/domain.Payment"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/savings/deposit": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "savings"
+                ],
+                "summary": "Deposit USDC into driver savings account",
+                "parameters": [
+                    {
+                        "description": "Deposit",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "amount_usdc": {
+                                    "type": "number"
+                                },
+                                "driver_id": {
+                                    "type": "integer"
+                                }
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/domain.Savings"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/savings/{driverID}/balance": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "tags": [
+                    "savings"
+                ],
+                "summary": "Get savings balance for a driver",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Driver ID",
+                        "name": "driverID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/domain.Savings"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/tricycles": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "tags": [
+                    "tricycles"
+                ],
+                "summary": "List all tricycles",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/domain.Tricycle"
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tricycles"
+                ],
+                "summary": "Register a new tricycle",
+                "parameters": [
+                    {
+                        "description": "Tricycle",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/domain.Tricycle"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/domain.Tricycle"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/tricycles/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "tags": [
+                    "tricycles"
+                ],
+                "summary": "Get tricycle by ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Tricycle ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/domain.Tricycle"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/tricycles/{id}/fractionalize": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "tags": [
+                    "tricycles"
+                ],
+                "summary": "Fractionalize a tokenized tricycle into investor shares",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Tricycle ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Fractions",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "total_fractions": {
+                                    "type": "integer"
+                                }
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/domain.Tricycle"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/tricycles/{id}/tokenize": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "tags": [
+                    "tricycles"
+                ],
+                "summary": "Tokenize a tricycle on the Canton ledger",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Tricycle ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/domain.Tricycle"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/yield/investor/{investorID}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "tags": [
+                    "yield"
+                ],
+                "summary": "Get all yield payouts for an investor",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Investor ID",
+                        "name": "investorID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/domain.YieldPayout"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/auth/account": {
             "delete": {
                 "security": [
@@ -24,6 +685,83 @@
                 ],
                 "summary": "Delete own account",
                 "responses": {}
+            }
+        },
+        "/auth/login": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Login and get JWT + session",
+                "parameters": [
+                    {
+                        "description": "Login",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "email": {
+                                    "type": "string"
+                                },
+                                "password": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/logout": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Logout current session",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
             }
         },
         "/auth/me": {
@@ -92,9 +830,276 @@
                     }
                 }
             }
+        },
+        "/auth/register": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Register a new user",
+                "parameters": [
+                    {
+                        "description": "Register",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "email": {
+                                    "type": "string"
+                                },
+                                "password": {
+                                    "type": "string"
+                                },
+                                "role": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/domain.User"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/sessions": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "List all active sessions for current user",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/domain.Session"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/sessions/{sessionID}": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Revoke a specific session (log out other device)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Session ID",
+                        "name": "sessionID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
+        "domain.Driver": {
+            "type": "object",
+            "properties": {
+                "country": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "credit_score": {
+                    "type": "integer"
+                },
+                "full_name": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "integer"
+                },
+                "weeks_remaining": {
+                    "description": "out of 70",
+                    "type": "integer"
+                }
+            }
+        },
+        "domain.Fraction": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "investor_id": {
+                    "type": "integer"
+                },
+                "price_per_unit": {
+                    "type": "number"
+                },
+                "tricycle_id": {
+                    "type": "integer"
+                },
+                "units": {
+                    "type": "integer"
+                }
+            }
+        },
+        "domain.Investor": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "full_name": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "user_id": {
+                    "type": "integer"
+                },
+                "wallet_address": {
+                    "type": "string"
+                }
+            }
+        },
+        "domain.Loan": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "driver_id": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "principal_usdc": {
+                    "type": "number"
+                },
+                "remaining_usdc": {
+                    "type": "number"
+                },
+                "status": {
+                    "$ref": "#/definitions/domain.LoanStatus"
+                },
+                "weekly_repayment": {
+                    "type": "number"
+                }
+            }
+        },
+        "domain.LoanStatus": {
+            "type": "string",
+            "enum": [
+                "active",
+                "repaid",
+                "defaulted"
+            ],
+            "x-enum-varnames": [
+                "LoanActive",
+                "LoanRepaid",
+                "LoanDefaulted"
+            ]
+        },
+        "domain.Payment": {
+            "type": "object",
+            "properties": {
+                "amount_local": {
+                    "type": "number"
+                },
+                "amount_usdc": {
+                    "type": "number"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "currency": {
+                    "type": "string"
+                },
+                "driver_id": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "status": {
+                    "$ref": "#/definitions/domain.PaymentStatus"
+                },
+                "tricycle_id": {
+                    "type": "integer"
+                },
+                "week_number": {
+                    "type": "integer"
+                }
+            }
+        },
+        "domain.PaymentStatus": {
+            "type": "string",
+            "enum": [
+                "pending",
+                "confirmed",
+                "failed"
+            ],
+            "x-enum-varnames": [
+                "PaymentPending",
+                "PaymentConfirmed",
+                "PaymentFailed"
+            ]
+        },
         "domain.Role": {
             "type": "string",
             "enum": [
@@ -106,6 +1111,96 @@
                 "RoleDriver",
                 "RoleInvestor",
                 "RoleAdmin"
+            ]
+        },
+        "domain.Savings": {
+            "type": "object",
+            "properties": {
+                "balance_usdc": {
+                    "type": "number"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "driver_id": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "domain.Session": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "expires_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "role": {
+                    "$ref": "#/definitions/domain.Role"
+                },
+                "user_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "domain.Tricycle": {
+            "type": "object",
+            "properties": {
+                "contract_id": {
+                    "description": "Canton ledger contract ID",
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "driver_id": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "is_ev": {
+                    "type": "boolean"
+                },
+                "make": {
+                    "type": "string"
+                },
+                "model": {
+                    "type": "string"
+                },
+                "price_usd": {
+                    "type": "number"
+                },
+                "status": {
+                    "$ref": "#/definitions/domain.TricycleStatus"
+                },
+                "total_fractions": {
+                    "type": "integer"
+                }
+            }
+        },
+        "domain.TricycleStatus": {
+            "type": "string",
+            "enum": [
+                "available",
+                "financing",
+                "owned",
+                "tokenized",
+                "fractionalized"
+            ],
+            "x-enum-varnames": [
+                "StatusAvailable",
+                "StatusFinancing",
+                "StatusOwned",
+                "StatusTokenized",
+                "StatusFractionalized"
             ]
         },
         "domain.User": {
@@ -124,14 +1219,29 @@
                     "$ref": "#/definitions/domain.Role"
                 }
             }
-        }
-    },
-    "securityDefinitions": {
-        "BearerAuth": {
-            "description": "Type \"Bearer \u003ctoken\u003e\"",
-            "type": "apiKey",
-            "name": "Authorization",
-            "in": "header"
+        },
+        "domain.YieldPayout": {
+            "type": "object",
+            "properties": {
+                "amount_usdc": {
+                    "type": "number"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "fraction_id": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "investor_id": {
+                    "type": "integer"
+                },
+                "week_number": {
+                    "type": "integer"
+                }
+            }
         }
     }
 }
