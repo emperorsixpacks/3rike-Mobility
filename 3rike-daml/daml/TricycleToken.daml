@@ -1,0 +1,83 @@
+-- TricycleToken.daml
+-- Represents a tokenized tricycle asset on the Canton ledger.
+-- Each tricycle is owned by an operator and assigned to a driver.
+-- It can be fractionalized into investor shares.
+
+module TricycleToken where
+
+import DA.List (foldl)
+
+-- A single investor fraction of a tricycle.
+template Fraction
+  with
+    operator   : Party
+    investor   : Party
+    tricycleId : Text
+    units      : Int
+    totalUnits : Int
+    pricePerUnit : Decimal
+  where
+    signatory operator
+    observer  investor
+
+    -- Investor can transfer their fraction to another party.
+    choice TransferFraction : ContractId Fraction
+      with newInvestor : Party
+      controller investor
+      do
+        create this with investor = newInvestor
+
+
+-- The main tricycle token — created when a tricycle is tokenized.
+template TricycleToken
+  with
+    operator      : Party
+    driver        : Party
+    tricycleId    : Text
+    make          : Text
+    model         : Text
+    isEV          : Bool
+    priceUSD      : Decimal
+    totalFractions : Int
+    fractionalized : Bool
+    weeksRemaining : Int   -- out of 70
+  where
+    signatory operator
+    observer  driver
+
+    -- Operator fractionalizes the tricycle into N equal shares.
+    -- Returns updated token + list of fraction contract IDs.
+    nonconsuming choice Fractionalize : (ContractId TricycleToken, [ContractId Fraction])
+      with
+        investors     : [Party]   -- list of investor parties
+        unitsEach     : Int       -- units allocated per investor
+        pricePerUnit  : Decimal
+      controller operator
+      do
+        assertMsg "already fractionalized" (not fractionalized)
+        assertMsg "no investors provided" (length investors > 0)
+        fractionIds <- forA investors $ \inv ->
+          create Fraction with
+            operator
+            investor     = inv
+            tricycleId
+            units        = unitsEach
+            totalUnits   = totalFractions
+            pricePerUnit
+        updatedToken <- create this with fractionalized = True
+        return (updatedToken, fractionIds)
+
+    -- Driver makes a weekly repayment — decrements weeksRemaining.
+    choice RecordPayment : ContractId TricycleToken
+      with weekNumber : Int
+      controller operator
+      do
+        assertMsg "ownership already complete" (weeksRemaining > 0)
+        create this with weeksRemaining = weeksRemaining - 1
+
+    -- Final transfer of ownership to driver when fully paid.
+    choice TransferOwnership : ()
+      controller operator
+      do
+        assertMsg "not fully paid yet" (weeksRemaining == 0)
+        return ()
