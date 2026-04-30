@@ -14,6 +14,12 @@ type Config struct {
 	CantonURL   string
 	CantonToken string
 	Env         string
+
+	// Keycloak OIDC — when set, the backend auto-fetches Canton bearer tokens.
+	OIDCTokenURL string
+	OIDCClientID string
+	OIDCUsername string
+	OIDCPassword string
 }
 
 func Load() *Config {
@@ -26,6 +32,11 @@ func Load() *Config {
 		CantonURL:   getEnv("CANTON_URL", "http://localhost:7575"),
 		CantonToken: getEnv("CANTON_TOKEN", ""),
 		Env:         getEnv("ENV", "development"),
+
+		OIDCTokenURL: getEnv("OIDC_TOKEN_URL", ""),
+		OIDCClientID: getEnv("OIDC_CLIENT_ID", ""),
+		OIDCUsername: getEnv("OIDC_USERNAME", ""),
+		OIDCPassword: getEnv("OIDC_PASSWORD", ""),
 	}
 }
 
