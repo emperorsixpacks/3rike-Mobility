@@ -1,0 +1,34 @@
+-- Savings.daml
+-- Driver savings account on the Canton ledger.
+-- Deposits are recorded on-chain; interest is distributed by the operator.
+
+module Savings where
+
+template SavingsAccount
+  with
+    operator  : Party
+    driver    : Party
+    balanceUSDC : Decimal
+  where
+    signatory operator
+    observer  driver
+
+    choice Deposit : ContractId SavingsAccount
+      with amount : Decimal
+      controller driver
+      do
+        assertMsg "deposit must be positive" (amount > 0.0)
+        create this with balanceUSDC = balanceUSDC + amount
+
+    choice CreditInterest : ContractId SavingsAccount
+      with interest : Decimal
+      controller operator
+      do
+        create this with balanceUSDC = balanceUSDC + interest
+
+    choice Withdraw : ContractId SavingsAccount
+      with amount : Decimal
+      controller driver
+      do
+        assertMsg "insufficient balance" (amount <= balanceUSDC)
+        create this with balanceUSDC = balanceUSDC - amount
