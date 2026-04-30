@@ -14,13 +14,27 @@ import (
 
 // Client is the Canton JSON Ledger API client.
 type Client struct {
-	baseURL    string
-	token      string
-	httpClient *http.Client
+	baseURL       string
+	staticToken   string
+	tokenProvider *TokenProvider
+	httpClient    *http.Client
 }
 
+// New creates a Client with a static bearer token (or empty for stub mode).
 func New(baseURL, token string) *Client {
-	return &Client{baseURL: baseURL, token: token, httpClient: &http.Client{}}
+	return &Client{baseURL: baseURL, staticToken: token, httpClient: &http.Client{}}
+}
+
+// NewWithTokenProvider creates a Client that auto-fetches tokens via Keycloak.
+func NewWithTokenProvider(baseURL string, tp *TokenProvider) *Client {
+	return &Client{baseURL: baseURL, tokenProvider: tp, httpClient: &http.Client{}}
+}
+
+func (c *Client) bearerToken() (string, error) {
+	if c.tokenProvider != nil {
+		return c.tokenProvider.Token()
+	}
+	return c.staticToken, nil
 }
 
 // TokenizeResult is returned after a tricycle is tokenized on the ledger.
@@ -39,7 +53,7 @@ func (c *Client) Tokenize(ctx context.Context, tricycleID uint, driverParty stri
 	payload := map[string]any{
 		"commands": []map[string]any{{
 			"CreateCommand": map[string]any{
-				"templateId": "3riKE:TricycleToken:TricycleToken",
+				"templateId": "trike-contracts:TricycleToken:TricycleToken",
 				"createArguments": map[string]any{
 					"tricycleId": fmt.Sprintf("%d", tricycleID),
 					"owner":      driverParty,
@@ -90,7 +104,7 @@ func (c *Client) Fractionalize(ctx context.Context, contractID string, totalFrac
 	payload := map[string]any{
 		"commands": []map[string]any{{
 			"ExerciseCommand": map[string]any{
-				"templateId": "3riKE:TricycleToken:TricycleToken",
+				"templateId": "trike-contracts:TricycleToken:TricycleToken",
 				"contractId": contractID,
 				"choice":     "Fractionalize",
 				"choiceArgument": map[string]any{
@@ -135,8 +149,10 @@ func (c *Client) post(ctx context.Context, path string, body any) ([]byte, error
 		return nil, err
 	}
 	req.Header.Set("Content-Type", "application/json")
-	if c.token != "" {
-		req.Header.Set("Authorization", "Bearer "+c.token)
+	if tok, err := c.bearerToken(); err != nil {
+		return nil, fmt.Errorf("canton: get token: %w", err)
+	} else if tok != "" {
+		req.Header.Set("Authorization", "Bearer "+tok)
 	}
 	resp, err := c.httpClient.Do(req)
 	if err != nil {

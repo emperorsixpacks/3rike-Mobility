@@ -27,7 +27,14 @@ func main() {
 		rdb = nil
 	}
 
-	cantonClient := canton.New(cfg.CantonURL, cfg.CantonToken)
+	var cantonClient *canton.Client
+	if cfg.OIDCTokenURL != "" && cfg.OIDCUsername != "" {
+		tp := canton.NewTokenProvider(cfg.OIDCTokenURL, cfg.OIDCClientID, cfg.OIDCUsername, cfg.OIDCPassword)
+		cantonClient = canton.NewWithTokenProvider(cfg.CantonURL, tp)
+		log.Println("canton: using OIDC token provider")
+	} else {
+		cantonClient = canton.New(cfg.CantonURL, cfg.CantonToken)
+	}
 	svc := service.New(database, cantonClient, cfg.JWTSecret, rdb)
 	h := handler.New(svc)
 
