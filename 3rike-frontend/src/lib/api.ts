@@ -207,6 +207,86 @@ export function getInvestor(id: number): Promise<Investor> {
 }
 
 // =============================================================================
+// Tricycles
+// =============================================================================
+
+export type TricycleStatus =
+  | "available"
+  | "financing"
+  | "owned"
+  | "tokenized"
+  | "fractionalized";
+
+export type Tricycle = {
+  id: number;
+  driver_id: number;
+  make: string;
+  model: string;
+  is_ev: boolean;
+  price_usd: number;
+  status: TricycleStatus;
+  contract_id: string;
+  total_fractions: number;
+  created_at: string;
+};
+
+export function listTricycles(): Promise<Tricycle[]> {
+  return request<Tricycle[]>("/api/tricycles");
+}
+
+export function getTricycle(id: number): Promise<Tricycle> {
+  return request<Tricycle>(`/api/tricycles/${id}`);
+}
+
+// =============================================================================
+// Fractions (user purchases)
+// =============================================================================
+
+export type Fraction = {
+  id: number;
+  tricycle_id: number;
+  investor_id: number;
+  units: number;
+  price_per_unit: number;
+  created_at: string;
+};
+
+/**
+ * Purchase fractional ownership in a tricycle. Backend lazily creates an
+ * investor profile for the caller if they don't have one.
+ */
+export function buyFraction(payload: {
+  tricycle_id: number;
+  units: number;
+}): Promise<Fraction> {
+  return request<Fraction>("/api/fractions", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function listInvestments(investorId: number): Promise<Fraction[]> {
+  return request<Fraction[]>(`/api/investors/${investorId}/investments`);
+}
+
+// =============================================================================
+// Yield (investor earnings)
+// =============================================================================
+
+export type YieldPayout = {
+  id: number;
+  investor_id: number;
+  fraction_id: number;
+  amount_usdc: number;
+  week_number: number;
+  created_at: string;
+};
+
+export function listYieldPayouts(investorId: number): Promise<YieldPayout[]> {
+  return request<YieldPayout[]>(`/api/yield/investor/${investorId}`);
+}
+
+// =============================================================================
 // Savings
 // =============================================================================
 

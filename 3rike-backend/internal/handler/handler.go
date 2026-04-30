@@ -14,6 +14,7 @@ type Handlers struct {
 	Savings  *SavingsHandler
 	Yield    *YieldHandler
 	Waitlist *WaitlistHandler
+	Fraction *FractionHandler
 }
 
 func New(svc *service.Services) *Handlers {
@@ -28,5 +29,6 @@ func New(svc *service.Services) *Handlers {
 		Savings:  &SavingsHandler{svc: svc.Savings},
 		Yield:    &YieldHandler{svc: svc.Yield},
 		Waitlist: &WaitlistHandler{svc: svc.Waitlist},
+		Fraction: &FractionHandler{svc: svc.Fraction},
 	}
 }

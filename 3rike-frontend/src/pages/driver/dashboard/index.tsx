@@ -8,6 +8,7 @@ import WithdrawOptions from "../withdraw/options";
 import BottomNav from "@/components/ui/bottom-nav";
 import { useAuth } from "@/lib/auth";
 import { useSavings } from "@/lib/use-savings";
+import { useEarnings } from "@/lib/use-earnings";
 
 // Local UX states layered on top of the backend driver record:
 //   - not_started: no driver profile yet → CTA to start KYC
@@ -22,6 +23,7 @@ export default function DriverDashboard() {
   const navigate = useNavigate();
   const { user, driver } = useAuth();
   const { balance: savingsBalance, refresh: refreshSavings } = useSavings();
+  const { total: lifetimeEarnings } = useEarnings();
   const [changeCurrency, setChangeCurrency] = useState(true);
   const [verificationStatus, setVerificationStatus] = useState<VerificationStatus>(
     () => deriveStatus(driver),
@@ -114,7 +116,9 @@ export default function DriverDashboard() {
 
               <div className="flex flex-row justify-between mb-6">
                 <h1 className="text-4xl font-bold ">
-                  {changeCurrency ? "$ 0.00" : "₵ 0.00"}
+                  {changeCurrency
+                    ? `$ ${formatBalance(lifetimeEarnings)}`
+                    : `₵ ${formatBalance(lifetimeEarnings)}`}
                 </h1>
 
                 {/* Custom Toggle Switch */}

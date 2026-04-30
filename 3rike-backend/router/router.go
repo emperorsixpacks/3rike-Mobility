@@ -66,6 +66,10 @@ func Register(app *fiber.App, h *handler.Handlers, cfg *config.Config, rdb *redi
 	investors.Get("/:id", middleware.Cache(rdb, 5*time.Minute), h.Investor.GetByID)
 	investors.Get("/:id/investments", middleware.Cache(rdb, 2*time.Minute), h.Investor.ListInvestments)
 
+	// User-driven purchase of fractional ownership.
+	fractions := api.Group("/fractions")
+	fractions.Post("/", h.Fraction.Buy)
+
 	tricycles := api.Group("/tricycles")
 	tricycles.Post("/", h.Tricycle.Create)
 	tricycles.Get("/", middleware.Cache(rdb, 5*time.Minute), h.Tricycle.List)
