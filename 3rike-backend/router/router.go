@@ -24,8 +24,12 @@ func Register(app *fiber.App, h *handler.Handlers, cfg *config.Config, rdb *redi
 		return c.JSON(fiber.Map{"status": "ok"})
 	})
 
-	// Swagger — JWT protected
-	app.Get("/docs/*", jwtAuth, swagger.HandlerDefault)
+	// Swagger — public in development, JWT-protected in production
+	if cfg.Env == "production" {
+		app.Get("/docs/*", jwtAuth, swagger.HandlerDefault)
+	} else {
+		app.Get("/docs/*", swagger.HandlerDefault)
+	}
 
 	// ── Public ───────────────────────────────────────────────────────────────
 	auth := app.Group("/auth")

@@ -1,0 +1,87 @@
+basePath: /
+definitions:
+  domain.Role:
+    enum:
+    - driver
+    - investor
+    - admin
+    type: string
+    x-enum-varnames:
+    - RoleDriver
+    - RoleInvestor
+    - RoleAdmin
+  domain.User:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      id:
+        type: integer
+      role:
+        $ref: '#/definitions/domain.Role'
+    type: object
+host: localhost:8080
+info:
+  contact:
+    name: 3riKE Team
+    url: https://3rike.xyz
+  description: Real-world asset platform — tricycle ownership financing, tokenization,
+    and investor yield.
+  title: 3riKE API
+  version: "1.0"
+paths:
+  /auth/account:
+    delete:
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Delete own account
+      tags:
+      - user
+  /auth/me:
+    get:
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.User'
+      security:
+      - BearerAuth: []
+      summary: Get current user profile
+      tags:
+      - user
+  /auth/password:
+    put:
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Change password
+      tags:
+      - user
+  /auth/profile:
+    put:
+      parameters:
+      - description: email
+        in: body
+        name: body
+        required: true
+        schema:
+          type: object
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.User'
+      security:
+      - BearerAuth: []
+      summary: Update email / profile
+      tags:
+      - user
+securityDefinitions:
+  BearerAuth:
+    description: Type "Bearer <token>"
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
