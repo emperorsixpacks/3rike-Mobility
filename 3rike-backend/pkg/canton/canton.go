@@ -1,6 +1,5 @@
-// Package canton provides a stub client for the Canton JSON Ledger API.
-// Replace stub methods with real DAML command submissions once contracts are deployed.
-// Canton JSON Ledger API base: POST /v2/commands/submit-and-wait
+// Package canton provides a client for the Canton JSON Ledger API.
+// Canton JSON Ledger API base: POST /v2/commands/submit-and-wait-for-transaction-tree
 // Docs: https://docs.digitalasset.com/build/3.5
 package canton
 
@@ -10,7 +9,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 )
+
+// TrikeContractsPkgID is the package hash for trike-contracts-1.0.0.
+// DAML Int and Decimal fields must be serialized as strings per the JSON Ledger API spec.
+const TrikeContractsPkgID = "fb36f0cfcfe6c4b2a24f458f5ba06bfc697fa0584b13f44ae3d3568a294d4c19"
 
 // Client is the Canton JSON Ledger API client.
 type Client struct {
@@ -43,49 +47,44 @@ type TokenizeResult struct {
 }
 
 // Tokenize submits a CreateTricycleToken command to the Canton ledger.
-// Stub: returns a deterministic contract ID until real DAML contracts are deployed.
 func (c *Client) Tokenize(ctx context.Context, tricycleID uint, driverParty string) (*TokenizeResult, error) {
 	if c.baseURL == "" {
-		// Stub mode — no Canton node configured yet.
 		return &TokenizeResult{ContractID: fmt.Sprintf("stub-contract-%d", tricycleID)}, nil
 	}
 
 	payload := map[string]any{
+		"commandId":  fmt.Sprintf("tokenize-%d-%d", tricycleID, time.Now().UnixNano()),
+		"workflowId": fmt.Sprintf("tokenize-%d", tricycleID),
+		"actAs":      []string{driverParty},
+		"readAs":     []string{driverParty},
 		"commands": []map[string]any{{
 			"CreateCommand": map[string]any{
-				"templateId": "trike-contracts:TricycleToken:TricycleToken",
+				"templateId": TrikeContractsPkgID + ":TricycleToken:TricycleToken",
 				"createArguments": map[string]any{
-					"tricycleId": fmt.Sprintf("%d", tricycleID),
-					"owner":      driverParty,
+					"operator":       driverParty,
+					"driver":         driverParty,
+					"tricycleId":     fmt.Sprintf("%d", tricycleID),
+					"make":           "Unknown",
+					"model":          "Unknown",
+					"isEV":           false,
+					"priceUSD":       "0.0",
+					"totalFractions": "0",
+					"fractionalized": false,
+					"weeksRemaining": "70",
 				},
 			},
 		}},
-		"actAs":    []string{driverParty},
-		"readAs":   []string{driverParty},
-		"workflowId": fmt.Sprintf("tokenize-%d", tricycleID),
 	}
 
-	res, err := c.post(ctx, "/v2/commands/submit-and-wait", payload)
+	res, err := c.post(ctx, "/v2/commands/submit-and-wait-for-transaction-tree", payload)
 	if err != nil {
 		return nil, err
 	}
-
-	var result struct {
-		Transaction struct {
-			Events []struct {
-				Created struct {
-					ContractID string `json:"contractId"`
-				} `json:"created"`
-			} `json:"events"`
-		} `json:"transaction"`
-	}
-	if err := json.Unmarshal(res, &result); err != nil {
+	contractID, err := extractContractID(res)
+	if err != nil {
 		return nil, err
 	}
-	if len(result.Transaction.Events) == 0 {
-		return nil, fmt.Errorf("canton: no events in tokenize response")
-	}
-	return &TokenizeResult{ContractID: result.Transaction.Events[0].Created.ContractID}, nil
+	return &TokenizeResult{ContractID: contractID}, nil
 }
 
 // FractionalizeResult is returned after fractions are created on the ledger.
@@ -94,49 +93,63 @@ type FractionalizeResult struct {
 	TotalFractions int    `json:"totalFractions"`
 }
 
-// Fractionalize submits a FractionalizeTricycle choice to the Canton ledger.
-// Stub: returns deterministic values until real DAML contracts are deployed.
+// Fractionalize exercises the Fractionalize choice on a TricycleToken contract.
 func (c *Client) Fractionalize(ctx context.Context, contractID string, totalFractions int, operatorParty string) (*FractionalizeResult, error) {
 	if c.baseURL == "" {
 		return &FractionalizeResult{ContractID: contractID, TotalFractions: totalFractions}, nil
 	}
 
 	payload := map[string]any{
+		"commandId": fmt.Sprintf("fractionalize-%s-%d", contractID[:8], time.Now().UnixNano()),
+		"actAs":     []string{operatorParty},
+		"readAs":    []string{operatorParty},
 		"commands": []map[string]any{{
 			"ExerciseCommand": map[string]any{
-				"templateId": "trike-contracts:TricycleToken:TricycleToken",
+				"templateId": TrikeContractsPkgID + ":TricycleToken:TricycleToken",
 				"contractId": contractID,
 				"choice":     "Fractionalize",
 				"choiceArgument": map[string]any{
-					"totalFractions": totalFractions,
+					"investors":    []string{operatorParty},
+					"unitsEach":    fmt.Sprintf("%d", totalFractions),
+					"pricePerUnit": "1.0",
 				},
 			},
 		}},
-		"actAs":  []string{operatorParty},
-		"readAs": []string{operatorParty},
 	}
 
-	res, err := c.post(ctx, "/v2/commands/submit-and-wait", payload)
+	res, err := c.post(ctx, "/v2/commands/submit-and-wait-for-transaction-tree", payload)
 	if err != nil {
 		return nil, err
 	}
-
-	var result struct {
-		Transaction struct {
-			Events []struct {
-				Created struct {
-					ContractID string `json:"contractId"`
-				} `json:"created"`
-			} `json:"events"`
-		} `json:"transaction"`
-	}
-	if err := json.Unmarshal(res, &result); err != nil {
+	newContractID, err := extractContractID(res)
+	if err != nil {
 		return nil, err
 	}
-	if len(result.Transaction.Events) == 0 {
-		return nil, fmt.Errorf("canton: no events in fractionalize response")
+	return &FractionalizeResult{ContractID: newContractID, TotalFractions: totalFractions}, nil
+}
+
+// extractContractID pulls the first contractId from a transaction tree response.
+func extractContractID(data []byte) (string, error) {
+	var result struct {
+		TransactionTree struct {
+			EventsById map[string]struct {
+				CreatedTreeEvent struct {
+					Value struct {
+						ContractID string `json:"contractId"`
+					} `json:"value"`
+				} `json:"CreatedTreeEvent"`
+			} `json:"eventsById"`
+		} `json:"transactionTree"`
 	}
-	return &FractionalizeResult{ContractID: result.Transaction.Events[0].Created.ContractID, TotalFractions: totalFractions}, nil
+	if err := json.Unmarshal(data, &result); err != nil {
+		return "", fmt.Errorf("canton: parse response: %w", err)
+	}
+	for _, ev := range result.TransactionTree.EventsById {
+		if id := ev.CreatedTreeEvent.Value.ContractID; id != "" {
+			return id, nil
+		}
+	}
+	return "", fmt.Errorf("canton: no contractId in response")
 }
 
 func (c *Client) post(ctx context.Context, path string, body any) ([]byte, error) {
@@ -160,7 +173,9 @@ func (c *Client) post(ctx context.Context, path string, body any) ([]byte, error
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode >= 400 {
-		return nil, fmt.Errorf("canton: HTTP %d from %s", resp.StatusCode, path)
+		var buf bytes.Buffer
+		_, _ = buf.ReadFrom(resp.Body)
+		return nil, fmt.Errorf("canton: HTTP %d from %s: %s", resp.StatusCode, path, buf.String())
 	}
 	var buf bytes.Buffer
 	_, err = buf.ReadFrom(resp.Body)
