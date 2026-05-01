@@ -18,6 +18,7 @@ import {
     User,
     Landmark,
 } from "lucide-react";
+import MobileFrame from "@/components/ui/mobile-frame";
 
 // --- Zod Schemas ---
 const recipientSchema = z.object({
@@ -184,7 +185,8 @@ export default function WithdrawSendMoney() {
     );
 
     return (
-        <div className="fixed inset-0 z-50 flex items-end justify-center">
+        <MobileFrame>
+        <div className="absolute inset-0 z-50 flex items-end justify-center">
 
             {/* Backdrop */}
             <div className="absolute inset-0 bg-black/20 backdrop-blur-sm transition-opacity duration-300" onClick={handleClose} />
@@ -604,5 +606,6 @@ export default function WithdrawSendMoney() {
                 )}
             </div>
         </div>
+        </MobileFrame>
     );
 }

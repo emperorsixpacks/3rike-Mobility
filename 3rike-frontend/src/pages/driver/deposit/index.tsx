@@ -328,7 +328,7 @@ export default function DepositModal({ isOpen, onClose, onDeposited }: DepositMo
 
             <div
                 className={`
-                    relative w-full bg-white rounded-4xl p-4 pb-8 shadow-2xl
+                    relative w-full max-w-100 bg-white rounded-4xl p-4 pb-8 shadow-2xl
                     transform transition-transform duration-300 ease-out
                     ${isOpen ? "translate-y-0" : "translate-y-full"}
                 `}

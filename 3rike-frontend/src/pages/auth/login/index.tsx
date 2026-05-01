@@ -15,6 +15,7 @@ import { useState } from "react";
 import { EyeClosed, EyeIcon } from "lucide-react";
 import { ApiError } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
+import MobileFrame from "@/components/ui/mobile-frame";
 
 const formSchema = z.object({
     email: z.string().email("Enter a valid email"),
@@ -57,8 +58,8 @@ export default function LoginForm() {
     }
 
     return (
-        <div className="fixed inset-0 overflow-y-auto bg-opacity-50 flex md:items-center justify-center">
-            <div className="bg-white sm:h-screen md:h-auto md:rounded-xl md:shadow-xl w-full max-w-xl p-6 mt-15">
+        <MobileFrame innerClassName="overflow-y-auto p-6 pt-15">
+            <div className="bg-white">
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                         <div className="pt-10 pb-2 text-center">
@@ -159,7 +160,7 @@ export default function LoginForm() {
                     </form>
                 </Form>
             </div>
-        </div>
+        </MobileFrame>
     );
 }
 

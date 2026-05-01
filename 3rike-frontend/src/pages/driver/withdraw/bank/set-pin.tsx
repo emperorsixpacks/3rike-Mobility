@@ -12,6 +12,7 @@ import { useNavigate } from "react-router-dom";
 import { X, ArrowLeft } from "lucide-react"; 
 import { PinInput } from "@/components/ui/pinInput";
 import { Button } from "@/components/ui/button";
+import MobileFrame from "@/components/ui/mobile-frame";
 
 const formSchema = z.object({
     pin: z
@@ -66,7 +67,8 @@ export default function SetPinWithdraw() {
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-end justify-center">
+        <MobileFrame>
+        <div className="absolute inset-0 z-50 flex items-end justify-center">
 
             {/* Backdrop - Lighter and Blurry to see screen behind */}
             <div
@@ -145,5 +147,6 @@ export default function SetPinWithdraw() {
                 </Form>
             </div>
         </div>
+        </MobileFrame>
     );
 }

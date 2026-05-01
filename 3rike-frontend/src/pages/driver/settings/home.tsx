@@ -12,6 +12,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
+import MobileFrame from "@/components/ui/mobile-frame";
 
 export default function SettingsHome() {
     const navigate = useNavigate();
@@ -49,7 +50,7 @@ export default function SettingsHome() {
     );
 
     return (
-        <div className="fixed inset-0 bg-white flex flex-col h-full">
+        <MobileFrame innerClassName="flex flex-col">
             
             {/* --- Header --- */}
             <div className="relative flex items-center justify-center pt-12 pb-6 px-6 bg-white shrink-0">
@@ -138,6 +139,6 @@ export default function SettingsHome() {
                 </Button>
             </div>
 
-        </div>
+        </MobileFrame>
     );
 }

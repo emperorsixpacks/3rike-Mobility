@@ -19,6 +19,7 @@ import { Input } from "@/components/ui/input";
 // import Swal from "sweetalert2";
 // import axios from "axios";
 import { Link } from "react-router-dom";
+import MobileFrame from "@/components/ui/mobile-frame";
 
 const formSchema = z.object({
     phone: z.string().min(11, { message: "Please enter a valid phone number" }),
@@ -61,8 +62,8 @@ export default function ForgotPasswordPhoneForm() {
 
 
     return (
-        <div className="fixed inset-0 overflow-y-auto bg-opacity-50 flex md:items-center justify-center">
-            <div className="bg-white sm:h-screen md:h-auto md:rounded-xl md:shadow-xl w-full max-w-xl p-6 mt-15">
+        <MobileFrame innerClassName="overflow-y-auto p-6 pt-15">
+            <div className="bg-white">
                 {/* Back Button */}
 
 
@@ -120,6 +121,6 @@ export default function ForgotPasswordPhoneForm() {
                     </form>
                 </Form>
             </div>
-        </div>
+        </MobileFrame>
     );
 };

@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button"; // Optional, in case you want to add a button later
+import MobileFrame from "@/components/ui/mobile-frame";
 
 // type VerificationStatus = "not_started" | "in_progress" | "approved";
 
@@ -15,7 +16,7 @@ export default function VerificationSuccess() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-6">
+    <MobileFrame innerBg="bg-gray-50" innerClassName="flex flex-col items-center justify-center p-6">
       <div className="w-full max-w-sm flex flex-col items-center text-center animate-in zoom-in-95 duration-500">
         
         {/* --- SUCCESS BADGE ICON --- */}
@@ -41,10 +42,10 @@ export default function VerificationSuccess() {
             >
                 Go to Dashboard
             </Button>
-        </div> 
-       
+        </div>
+
 
       </div>
-    </div>
+    </MobileFrame>
   );
 }

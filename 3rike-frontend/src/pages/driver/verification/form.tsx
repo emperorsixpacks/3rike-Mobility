@@ -26,6 +26,7 @@ import { CalendarIcon, UploadCloud, CheckCircle2, AlertCircle } from "lucide-rea
 import React from "react";
 import { ApiError } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
+import MobileFrame from "@/components/ui/mobile-frame";
 
 const PENDING_PROFILE_KEY = "3rike.pendingDriverProfile";
 
@@ -266,7 +267,7 @@ export default function VerifyAccountForm() {
     };
 
     return (
-        <div className="min-h-screen bg-white flex justify-center py-10 px-4">
+        <MobileFrame innerClassName="py-10 px-4">
             <div className="w-full max-w-md bg-white p-3 min-h-200 flex flex-col">
 
                 {/* Header Navigation */}
@@ -678,7 +679,7 @@ export default function VerifyAccountForm() {
                     </form>
                 </Form>
             </div>
-        </div>
+        </MobileFrame>
     );
 }
 

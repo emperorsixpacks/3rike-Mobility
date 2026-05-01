@@ -25,6 +25,7 @@ import {
     AlertCircle,
     XCircle,
 } from "lucide-react";
+import MobileFrame from "@/components/ui/mobile-frame";
 
 // --- Zod Schema ---
 const formSchema = z.object({
@@ -67,7 +68,8 @@ export default function WithdrawBankDetails() {
     }
 
     return (
-        <div className="fixed inset-0 z-50 flex items-end justify-center">
+        <MobileFrame>
+        <div className="absolute inset-0 z-50 flex items-end justify-center">
 
             {/* Backdrop */}
             <div
@@ -207,5 +209,6 @@ export default function WithdrawBankDetails() {
                 </div>
             </div>
         </div>
+        </MobileFrame>
     );
 }

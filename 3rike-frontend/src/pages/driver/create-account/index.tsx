@@ -20,6 +20,7 @@ import { EyeClosed, EyeIcon } from "lucide-react";
 import { PinInput } from "@/components/ui/pinInput";
 import { ApiError } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
+import MobileFrame from "@/components/ui/mobile-frame";
 
 // Backend-required fields are email + password + role. The other fields
 // (name, phone, PIN) are collected here for UX but only persisted locally
@@ -150,8 +151,8 @@ export default function CreateAccountForm() {
 
 
     return (
-        <div className="fixed inset-0 overflow-y-auto bg-opacity-50 flex md:items-center justify-center">
-            <div className="bg-white sm:h-screen md:h-auto md:rounded-xl md:shadow-xl w-full max-w-xl p-6">
+        <MobileFrame innerClassName="overflow-y-auto p-6">
+            <div className="bg-white">
                 {/* Back Button */}
 
 
@@ -444,7 +445,7 @@ export default function CreateAccountForm() {
                     </form>
                 </Form>
             </div>
-        </div>
+        </MobileFrame>
     );
 };
 

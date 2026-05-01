@@ -3,6 +3,7 @@ import { ChevronLeft, ChevronDown, ArrowUpDown, Pencil, Wallet } from "lucide-re
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
+import MobileFrame from "@/components/ui/mobile-frame";
 
 // --- Types ---
 // Added 'confirm' step to the flow
@@ -351,7 +352,8 @@ export default function WithdrawCryptoAsset() {
     );
 
     return (
-        <div className="fixed inset-0 bg-gray-500/20 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 select-none">
+        <MobileFrame>
+        <div className="absolute inset-0 bg-gray-500/20 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 select-none">
             <div className="w-full h-[95vh] sm:h-auto sm:min-h-175 sm:max-w-md bg-white rounded-t-[32px] sm:rounded-[32px] p-6 flex flex-col shadow-2xl overflow-hidden relative">
 
                 {/* Drag Handle */}
@@ -370,5 +372,6 @@ export default function WithdrawCryptoAsset() {
 
             </div>
         </div>
+        </MobileFrame>
     );
 }

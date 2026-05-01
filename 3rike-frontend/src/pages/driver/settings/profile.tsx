@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Check, ChevronLeft, ChevronRight, Copy } from "lucide-react";
 import { useAuth } from "@/lib/auth";
+import MobileFrame from "@/components/ui/mobile-frame";
 
 export default function SettingsProfile() {
     const navigate = useNavigate();
@@ -30,7 +31,7 @@ export default function SettingsProfile() {
     };
 
     return (
-        <div className="min-h-screen bg-[#F8FAFC] flex flex-col">
+        <MobileFrame innerBg="bg-[#F8FAFC]" innerClassName="flex flex-col">
 
             {/* --- Header --- */}
             <div className="relative flex items-center justify-center pt-12 pb-6 px-6 bg-[#F8FAFC]">
@@ -113,6 +114,6 @@ export default function SettingsProfile() {
                 </div>
 
             </div>
-        </div>
+        </MobileFrame>
     );
 }

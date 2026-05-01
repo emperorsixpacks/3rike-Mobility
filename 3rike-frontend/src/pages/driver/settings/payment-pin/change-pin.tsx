@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { X, Lock, Eye } from "lucide-react";
 import { useState } from "react";
+import MobileFrame from "@/components/ui/mobile-frame";
 
 export default function ChangePaymentPin() {
     const navigate = useNavigate();
@@ -19,7 +20,7 @@ export default function ChangePaymentPin() {
     };
 
     return (
-        <div className="fixed inset-0 bg-white flex flex-col h-full">
+        <MobileFrame innerClassName="flex flex-col">
             
             {/* --- Top Navigation (X Button) --- */}
             <div className="px-6 pt-12 pb-4">
@@ -132,6 +133,6 @@ export default function ChangePaymentPin() {
                 </div>
             </div>
 
-        </div>
+        </MobileFrame>
     );
 }

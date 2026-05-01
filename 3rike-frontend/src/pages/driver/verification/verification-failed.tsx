@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import React from "react";
+import MobileFrame from "@/components/ui/mobile-frame";
 
 // --- VALIDATION SCHEMAS ---
 const formSchema = z.object({
@@ -80,7 +81,7 @@ export default function VerificationFailedForm() {
     };
 
     return (
-        <div className="min-h-screen bg-white flex justify-center py-10 px-4">
+        <MobileFrame innerClassName="py-10 px-4">
             <div className="w-full max-w-md bg-white p-3 min-h-200 flex flex-col">
 
                 {/* Header Navigation */}
@@ -198,6 +199,6 @@ export default function VerificationFailedForm() {
                     </form>
                 </Form>
             </div>
-        </div>
+        </MobileFrame>
     );
 }

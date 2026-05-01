@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import MobileFrame from "@/components/ui/mobile-frame";
 
 const onboardingData = [
     {
@@ -30,10 +31,7 @@ export default function SavingsOnboarding() {
     };
 
     return (
-        <div
-            className="fixed inset-0 bg-white flex flex-col p-3 overflow-y-auto"
-
-        >
+        <MobileFrame innerClassName="flex flex-col p-3 overflow-y-auto">
 
             <div className="relative flex items-center pt-10 p-6">
                 {/* Back button */}
@@ -95,6 +93,6 @@ export default function SavingsOnboarding() {
 
             </div>
 
-        </div>
+        </MobileFrame>
     );
 }
