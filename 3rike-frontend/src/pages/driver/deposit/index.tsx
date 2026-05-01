@@ -183,6 +183,21 @@ export default function DepositModal({ isOpen, onClose, onDeposited }: DepositMo
                 <h2 className="text-xl font-bold text-gray-900">Deposit ${amount || "0.00"}</h2>
             </div>
 
+            {/* Demo-mode safety warning. The address below is a hardcoded
+                placeholder from the original UI mockup — it is NOT a wallet
+                anyone monitors. Real deposits require integrating a custodial
+                wallet provider (Circle, Privy, Magic) so each user gets a
+                unique deposit address whose transactions are confirmed
+                on-chain before crediting the savings balance. */}
+            <div className="w-full mb-4 p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs leading-relaxed">
+                <p className="font-bold mb-0.5">⚠ Demo mode</p>
+                <p>
+                    The address below is a placeholder. Do <span className="font-bold">not</span> send real
+                    crypto — funds will be lost. Confirming below records a
+                    deposit in the database without any on-chain verification.
+                </p>
+            </div>
+
             <p className="text-gray-400 text-xs text-center">
                 Only send supported chain to the address below
             </p>
@@ -241,6 +256,19 @@ export default function DepositModal({ isOpen, onClose, onDeposited }: DepositMo
                     <ArrowLeft size={20} />
                 </button>
                 <h2 className="text-xl font-bold text-gray-900">Bank Transfer</h2>
+            </div>
+
+            {/* Demo-mode safety warning. The bank account number below is a
+                placeholder. A real bank-deposit flow requires a payment
+                processor (Paystack for Ghana, Flutterwave) that webhooks
+                confirmation back to the backend before crediting the balance. */}
+            <div className="w-full mb-4 p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs leading-relaxed">
+                <p className="font-bold mb-0.5">⚠ Demo mode</p>
+                <p>
+                    The account number below is a placeholder. Do <span className="font-bold">not</span> send
+                    a real transfer. Confirming records a deposit without any
+                    bank-side verification.
+                </p>
             </div>
 
             <div className="w-full bg-gray-50 rounded-2xl p-6 mb-6 text-center space-y-4">
