@@ -145,10 +145,10 @@ export default function ThreeDetails() {
             alt="bg"
             className="absolute inset-0 w-full h-full object-cover opacity-40 z-0"
           />
-
+{/* 
           <div className="absolute top-3 right-3 z-10 px-2.5 py-1 rounded-full bg-white/20 backdrop-blur text-[10px] font-medium">
             {plate}
-          </div>
+          </div> */}
 
           {/* tricycle image */}
           <div className="relative z-10 flex items-center justify-center h-44">

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { useNavigate } from "react-router-dom";
@@ -32,6 +32,11 @@ export default function LoanDashboard() {
     const [changeCurrency, setChangeCurrency] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [serverError, setServerError] = useState<string | null>(null);
+    const [activeLoanId, setActiveLoanId] = useState<string | null>(null);
+
+    useEffect(() => {
+        setActiveLoanId(localStorage.getItem("3rike.activeLoanId"));
+    }, []);
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
@@ -76,11 +81,14 @@ export default function LoanDashboard() {
         const weeklyRepayment = Math.round((totalPayback / weeks) * 100) / 100;
 
         try {
-            await applyForLoan({
+            const loan = await applyForLoan({
                 driver_id: driver.id,
                 principal_usdc: principal,
                 weekly_repayment: weeklyRepayment,
             });
+            // Cache the loan id locally so the dashboard can surface a "View
+            // active loan" link on subsequent visits.
+            localStorage.setItem("3rike.activeLoanId", String(loan.id));
 
             // Compute due date from selected duration.
             const date = new Date();
@@ -158,6 +166,21 @@ export default function LoanDashboard() {
 
                 {/* Main Content Scroll Area */}
                 <div className="px-5 space-y-4">
+
+                    {/* Active loan banner — shown when there's a stored loan id */}
+                    {activeLoanId && (
+                        <button
+                            type="button"
+                            onClick={() => navigate(`/driver/loan/active/${activeLoanId}`)}
+                            className="w-full flex items-center justify-between p-3 rounded-xl bg-[#FDF5EA] border border-[#F8D7AB] text-left cursor-pointer hover:bg-[#fbf0e0] transition-colors"
+                        >
+                            <div>
+                                <p className="text-xs font-semibold text-[#EE9C2E]">You have an active loan</p>
+                                <p className="text-[11px] text-[#A86A1F]">Tap to view balance & repay</p>
+                            </div>
+                            <span className="text-[#EE9C2E] text-sm">›</span>
+                        </button>
+                    )}
 
                     {/* 1. GREEN BALANCE CARD */}
                     <div className="relative w-full h-40 rounded-3xl p-6 text-white overflow-hidden">

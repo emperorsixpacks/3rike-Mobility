@@ -146,6 +146,45 @@ export function logout(): Promise<void> {
   return request<void>("/auth/logout", { method: "POST" });
 }
 
+export function updateProfile(payload: { email: string }): Promise<User> {
+  return request<User>("/auth/profile", {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function changePassword(payload: {
+  old_password: string;
+  new_password: string;
+}): Promise<{ message: string }> {
+  return request<{ message: string }>("/auth/password", {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function deleteAccount(): Promise<void> {
+  return request<void>("/auth/account", { method: "DELETE" });
+}
+
+export type Session = {
+  id: string;
+  user_id: number;
+  role: Role;
+  created_at: string;
+  expires_at: string;
+};
+
+export function listSessions(): Promise<Session[]> {
+  return request<Session[]>("/auth/sessions");
+}
+
+export function revokeSession(sessionId: string): Promise<void> {
+  return request<void>(`/auth/sessions/${encodeURIComponent(sessionId)}`, {
+    method: "DELETE",
+  });
+}
+
 // =============================================================================
 // Drivers
 // =============================================================================

@@ -39,10 +39,15 @@ import SelectCryptoAsset from "./driver/withdraw/crypto/select-crypto";
 import WithdrawCryptoAsset from "./driver/withdraw/crypto/withdraw-crypto";
 import Investment from "./driver/investment";
 import InvestmentHome from "./driver/investment/home";
+import InvestmentPortfolio from "./driver/investment/portfolio";
 import Own3rike from "./driver/own-3rike";
 import Own3rikeDetails from "./driver/own-3rike/details";
 import Welcome3riker from "./driver/own-3rike/welcome";
 import ThreeDetails from "./driver/3rike-details";
+import ActiveLoan from "./driver/loan/active";
+import EditEmail from "./driver/settings/edit-email";
+import ChangePassword from "./driver/settings/change-password";
+import Sessions from "./driver/settings/sessions";
 export {
     Landing,
     NoMatch,
@@ -88,5 +93,10 @@ export {
     Own3rike,
     Own3rikeDetails,
     Welcome3riker,
-    ThreeDetails
+    ThreeDetails,
+    InvestmentPortfolio,
+    ActiveLoan,
+    EditEmail,
+    ChangePassword,
+    Sessions
 }

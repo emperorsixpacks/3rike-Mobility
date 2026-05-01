@@ -19,6 +19,7 @@ import {
   UNAUTHORIZED_EVENT,
   createDriver as apiCreateDriver,
   createInvestor as apiCreateInvestor,
+  deleteAccount as apiDeleteAccount,
   getDriver as apiGetDriver,
   getInvestor as apiGetInvestor,
   listDrivers as apiListDrivers,
@@ -26,6 +27,7 @@ import {
   logout as apiLogout,
   me as apiMe,
   register as apiRegister,
+  updateProfile as apiUpdateProfile,
   type Driver,
   type Investor,
   type Role,
@@ -70,6 +72,8 @@ type AuthContextValue = {
     full_name: string;
     wallet_address: string;
   }) => Promise<Investor>;
+  updateEmail: (email: string) => Promise<User>;
+  deleteAccount: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -236,6 +240,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [],
   );
 
+  const updateEmail = useCallback(async (email: string) => {
+    const updated = await apiUpdateProfile({ email });
+    setState((prev) =>
+      prev.status === "authenticated" ? { ...prev, user: updated } : prev,
+    );
+    return updated;
+  }, []);
+
+  const deleteAccount = useCallback(async () => {
+    await apiDeleteAccount();
+    clearSession();
+    setState(initialAnon);
+    navigate("/login", { replace: true });
+  }, [navigate]);
+
   const value = useMemo<AuthContextValue>(() => {
     const isAuthed = state.status === "authenticated";
     const hasProfile = isAuthed && (state.driver !== null || state.investor !== null);
@@ -253,8 +272,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       refresh,
       createDriverProfile,
       createInvestorProfile,
+      updateEmail,
+      deleteAccount,
     };
-  }, [state, login, register, logout, refresh, createDriverProfile, createInvestorProfile]);
+  }, [
+    state,
+    login,
+    register,
+    logout,
+    refresh,
+    createDriverProfile,
+    createInvestorProfile,
+    updateEmail,
+    deleteAccount,
+  ]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

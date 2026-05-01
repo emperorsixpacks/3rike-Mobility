@@ -143,7 +143,7 @@ export default function InvestmentApp() {
             <img src="/rounded-back.svg" alt="back" className="w-10 h-10" />
           </Button>
 
-          <nav className="flex items-center gap-5 text-sm">
+          <nav className="flex items-center gap-5 text-sm flex-1">
             <span className="font-bold text-black">Investment</span>
             <button
               type="button"
@@ -164,6 +164,14 @@ export default function InvestmentApp() {
               Shares
             </button>
           </nav>
+
+          <button
+            type="button"
+            onClick={() => navigate("/driver/investment/portfolio")}
+            className="text-xs font-medium text-[#01C259] hover:underline cursor-pointer shrink-0"
+          >
+            My
+          </button>
         </header>
 
         {/* Body */}
