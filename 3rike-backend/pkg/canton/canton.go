@@ -161,14 +161,24 @@ type WalletBalance struct {
 	TotalHoldingFees     string `json:"total_holding_fees"`
 }
 
-// GetWalletBalance fetches CC balance from the validator wallet API using the provided token.
+// GetWalletBalance fetches CC balance from the validator wallet API.
+// If bearerToken is empty, uses the canton client's own OIDC token (operator balance).
 func (c *Client) GetWalletBalance(ctx context.Context, validatorURL, bearerToken string) (*WalletBalance, error) {
+	if bearerToken == "" {
+		tok, err := c.bearerToken()
+		if err != nil {
+			return nil, err
+		}
+		if tok != "" {
+			bearerToken = "Bearer " + tok
+		}
+	}
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, validatorURL+"/api/validator/v0/wallet/balance", nil)
 	if err != nil {
 		return nil, err
 	}
 	if bearerToken != "" {
-		req.Header.Set("Authorization", bearerToken) // pass through as-is (includes "Bearer " prefix)
+		req.Header.Set("Authorization", bearerToken)
 	}
 	resp, err := c.httpClient.Do(req)
 	if err != nil {

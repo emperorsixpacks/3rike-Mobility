@@ -92,7 +92,9 @@ func (h *UserHandler) WalletBalance(c *fiber.Ctx) error {
 	if h.validatorURL == "" {
 		return c.Status(fiber.StatusServiceUnavailable).JSON(fiber.Map{"error": "validator URL not configured"})
 	}
-	bal, err := h.canton.GetWalletBalance(c.Context(), h.validatorURL, c.Get("Authorization"))
+	// Use the operator's OIDC token — the validator requires a Keycloak token,
+	// not the 3riKE JWT. The operator token is managed by the canton client.
+	bal, err := h.canton.GetWalletBalance(c.Context(), h.validatorURL, "")
 	if err != nil {
 		return c.Status(fiber.StatusBadGateway).JSON(fiber.Map{"error": err.Error()})
 	}
