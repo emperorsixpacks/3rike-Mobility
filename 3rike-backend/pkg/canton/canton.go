@@ -32,6 +32,7 @@ type Client struct {
 	staticToken   string
 	tokenProvider *TokenProvider
 	httpClient    *http.Client
+	operatorParty string // pays transaction fees; first in actAs
 }
 
 // New creates a Client with a static bearer token (or empty for stub mode).
@@ -42,6 +43,21 @@ func New(baseURL, token string) *Client {
 // NewWithTokenProvider creates a Client that auto-fetches tokens via Keycloak.
 func NewWithTokenProvider(baseURL string, tp *TokenProvider) *Client {
 	return &Client{baseURL: baseURL, tokenProvider: tp, httpClient: &http.Client{}}
+}
+
+// WithOperatorParty sets the operator party that co-signs and pays fees for all commands.
+func (c *Client) WithOperatorParty(party string) *Client {
+	c.operatorParty = party
+	return c
+}
+
+// actAs returns [operatorParty, userParty] if operator is set, else [userParty].
+// Operator is first so it pays the traffic fees.
+func (c *Client) actAs(userParty string) []string {
+	if c.operatorParty != "" && c.operatorParty != userParty {
+		return []string{c.operatorParty, userParty}
+	}
+	return []string{userParty}
 }
 
 func (c *Client) bearerToken() (string, error) {
@@ -111,7 +127,7 @@ func (c *Client) Fractionalize(ctx context.Context, contractID string, totalFrac
 
 	payload := map[string]any{
 		"commandId": fmt.Sprintf("fractionalize-%s-%d", contractID[:8], time.Now().UnixNano()),
-		"actAs":     []string{operatorParty},
+		"actAs":     c.actAs(operatorParty),
 		"readAs":    []string{operatorParty},
 		"commands": []map[string]any{{
 			"ExerciseCommand": map[string]any{
