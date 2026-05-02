@@ -26,11 +26,10 @@ type authService struct {
 	users     domain.UserRepository
 	jwtSecret string
 	rdb       *redis.Client
-	cantonParticipantFingerprint string
 }
 
-func newAuthService(users domain.UserRepository, jwtSecret string, rdb *redis.Client, fingerprint string) domain.AuthService {
-	return &authService{users: users, jwtSecret: jwtSecret, rdb: rdb, cantonParticipantFingerprint: fingerprint}
+func newAuthService(users domain.UserRepository, jwtSecret string, rdb *redis.Client) domain.AuthService {
+	return &authService{users: users, jwtSecret: jwtSecret, rdb: rdb}
 }
 
 func (s *authService) Register(ctx context.Context, email, password string, role domain.Role) (*domain.User, error) {
@@ -50,12 +49,6 @@ func (s *authService) Login(ctx context.Context, email, password string) (string
 	}
 	if err := bcrypt.CompareHashAndPassword([]byte(u.PasswordHash), []byte(password)); err != nil {
 		return "", "", errors.New("invalid credentials")
-	}
-
-	// Derive Canton party ID from Keycloak sub + participant fingerprint.
-	if u.KeycloakSub != "" && s.cantonParticipantFingerprint != "" && u.CantonPartyID == "" {
-		u.CantonPartyID = u.KeycloakSub + "::" + s.cantonParticipantFingerprint
-		_ = s.users.Update(ctx, u)
 	}
 
 	now := time.Now()

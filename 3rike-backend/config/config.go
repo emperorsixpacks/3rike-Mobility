@@ -21,9 +21,8 @@ type Config struct {
 	OIDCUsername string
 	OIDCPassword string
 
-	// Canton party derivation
-	CantonParticipantFingerprint string
-	CantonOperatorParty          string
+	// Canton operator party ID (your platform's party on the ledger).
+	CantonOperatorParty string
 }
 
 func Load() *Config {
@@ -42,8 +41,7 @@ func Load() *Config {
 		OIDCUsername: getEnv("OIDC_USERNAME", ""),
 		OIDCPassword: getEnv("OIDC_PASSWORD", ""),
 
-		CantonParticipantFingerprint: getEnv("CANTON_PARTICIPANT_FINGERPRINT", ""),
-		CantonOperatorParty:          getEnv("CANTON_OPERATOR_PARTY", ""),
+		CantonOperatorParty: getEnv("CANTON_OPERATOR_PARTY", ""),
 	}
 }
 

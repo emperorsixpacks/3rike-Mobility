@@ -11,7 +11,6 @@ type User struct {
 	Email         string `gorm:"uniqueIndex;not null"`
 	PasswordHash  string `gorm:"not null"`
 	Role          string `gorm:"not null"`
-	KeycloakSub   string
 	CantonPartyID string
 	CreatedAt     time.Time
 }
