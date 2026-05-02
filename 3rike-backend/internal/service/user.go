@@ -48,3 +48,12 @@ func (s *userService) ChangePassword(ctx context.Context, userID uint, oldPasswo
 func (s *userService) DeleteAccount(ctx context.Context, userID uint) error {
 	return s.users.Delete(ctx, userID)
 }
+
+func (s *userService) LinkWallet(ctx context.Context, userID uint, cantonPartyID string) (*domain.User, error) {
+	u, err := s.users.FindByID(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	u.CantonPartyID = cantonPartyID
+	return u, s.users.Update(ctx, u)
+}

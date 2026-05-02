@@ -29,7 +29,7 @@ func (s *tricycleService) List(ctx context.Context) ([]domain.Tricycle, error) {
 	return s.repo.List(ctx)
 }
 
-func (s *tricycleService) Tokenize(ctx context.Context, id uint) (*domain.Tricycle, error) {
+func (s *tricycleService) Tokenize(ctx context.Context, id uint, callerParty string) (*domain.Tricycle, error) {
 	t, err := s.repo.FindByID(ctx, id)
 	if err != nil {
 		return nil, err
@@ -37,7 +37,11 @@ func (s *tricycleService) Tokenize(ctx context.Context, id uint) (*domain.Tricyc
 	if t.Status != domain.StatusAvailable && t.Status != domain.StatusFinancing {
 		return nil, errors.New("tricycle cannot be tokenized in current status")
 	}
-	res, err := s.canton.Tokenize(ctx, t.ID, "operator")
+	party := callerParty
+	if party == "" {
+		party = "operator"
+	}
+	res, err := s.canton.Tokenize(ctx, t.ID, party)
 	if err != nil {
 		return nil, err
 	}
@@ -46,7 +50,7 @@ func (s *tricycleService) Tokenize(ctx context.Context, id uint) (*domain.Tricyc
 	return t, s.repo.Update(ctx, t)
 }
 
-func (s *tricycleService) Fractionalize(ctx context.Context, id uint, totalFractions int) (*domain.Tricycle, error) {
+func (s *tricycleService) Fractionalize(ctx context.Context, id uint, totalFractions int, callerParty string) (*domain.Tricycle, error) {
 	t, err := s.repo.FindByID(ctx, id)
 	if err != nil {
 		return nil, err
@@ -57,7 +61,11 @@ func (s *tricycleService) Fractionalize(ctx context.Context, id uint, totalFract
 	if totalFractions < 1 {
 		return nil, errors.New("totalFractions must be >= 1")
 	}
-	res, err := s.canton.Fractionalize(ctx, t.ContractID, totalFractions, "operator")
+	party := callerParty
+	if party == "" {
+		party = "operator"
+	}
+	res, err := s.canton.Fractionalize(ctx, t.ContractID, totalFractions, party)
 	if err != nil {
 		return nil, err
 	}

@@ -42,6 +42,7 @@ func Auth(jwtSecret string, rdb *redis.Client) fiber.Handler {
 		c.Locals("userID", uint(claims["sub"].(float64)))
 		c.Locals("role", claims["role"].(string))
 		c.Locals("sessionID", sessionID)
+		c.Locals("cantonPartyID", claims["canton_party_id"])
 		return c.Next()
 	}
 }

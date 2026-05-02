@@ -76,3 +76,28 @@ func (h *UserHandler) DeleteAccount(c *fiber.Ctx) error {
 	}
 	return c.SendStatus(fiber.StatusNoContent)
 }
+
+// LinkWallet godoc
+// @Summary      Link a Canton wallet party ID to the current user
+// @Tags         user
+// @Security     BearerAuth
+// @Param        body  body  object{canton_party_id=string}  true  "Party ID"
+// @Success      200   {object}  domain.User
+// @Router       /auth/wallet [put]
+func (h *UserHandler) LinkWallet(c *fiber.Ctx) error {
+	userID := c.Locals("userID").(uint)
+	var body struct {
+		CantonPartyID string `json:"canton_party_id"`
+	}
+	if err := c.BodyParser(&body); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	}
+	if body.CantonPartyID == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "canton_party_id required"})
+	}
+	u, err := h.svc.LinkWallet(c.Context(), userID, body.CantonPartyID)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+	return c.JSON(u)
+}

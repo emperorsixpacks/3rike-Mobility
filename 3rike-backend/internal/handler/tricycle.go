@@ -69,7 +69,8 @@ func (h *TricycleHandler) List(c *fiber.Ctx) error {
 // @Router       /api/tricycles/{id}/tokenize [post]
 func (h *TricycleHandler) Tokenize(c *fiber.Ctx) error {
 	id, _ := strconv.Atoi(c.Params("id"))
-	t, err := h.svc.Tokenize(c.Context(), uint(id))
+	party, _ := c.Locals("cantonPartyID").(string)
+	t, err := h.svc.Tokenize(c.Context(), uint(id), party)
 	if err != nil {
 		return c.Status(fiber.StatusUnprocessableEntity).JSON(fiber.Map{"error": err.Error()})
 	}
@@ -86,13 +87,14 @@ func (h *TricycleHandler) Tokenize(c *fiber.Ctx) error {
 // @Router       /api/tricycles/{id}/fractionalize [post]
 func (h *TricycleHandler) Fractionalize(c *fiber.Ctx) error {
 	id, _ := strconv.Atoi(c.Params("id"))
+	party, _ := c.Locals("cantonPartyID").(string)
 	var body struct {
 		TotalFractions int `json:"total_fractions"`
 	}
 	if err := c.BodyParser(&body); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
-	t, err := h.svc.Fractionalize(c.Context(), uint(id), body.TotalFractions)
+	t, err := h.svc.Fractionalize(c.Context(), uint(id), body.TotalFractions, party)
 	if err != nil {
 		return c.Status(fiber.StatusUnprocessableEntity).JSON(fiber.Map{"error": err.Error()})
 	}
