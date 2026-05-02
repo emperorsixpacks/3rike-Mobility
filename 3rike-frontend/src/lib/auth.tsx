@@ -22,6 +22,7 @@ import {
   deleteAccount as apiDeleteAccount,
   getDriver as apiGetDriver,
   getInvestor as apiGetInvestor,
+  linkWallet as apiLinkWallet,
   listDrivers as apiListDrivers,
   login as apiLogin,
   logout as apiLogout,
@@ -37,9 +38,11 @@ import {
   clearDriverId,
   clearInvestorId,
   clearSession,
+  getCantonPartyId,
   getDriverId,
   getInvestorId,
   getSession,
+  setCantonPartyId,
   setDriverId,
   setInvestorId,
   setSession,
@@ -74,6 +77,7 @@ type AuthContextValue = {
   }) => Promise<Investor>;
   updateEmail: (email: string) => Promise<User>;
   deleteAccount: () => Promise<void>;
+  linkWallet: (cantonPartyId: string) => Promise<User>;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -145,6 +149,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     try {
       const user = await apiMe();
+      // Backend currently doesn't include canton_party_id in /auth/me, so
+      // fall back to whatever we cached locally on the last linkWallet call.
+      if (!user.canton_party_id) {
+        const cached = getCantonPartyId();
+        if (cached) user.canton_party_id = cached;
+      }
       const { driver, investor } = await loadProfile(user);
       setState({ status: "authenticated", user, driver, investor });
       return user;
@@ -255,6 +265,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     navigate("/login", { replace: true });
   }, [navigate]);
 
+  const linkWallet = useCallback(async (cantonPartyId: string) => {
+    const updated = await apiLinkWallet({ canton_party_id: cantonPartyId });
+    if (updated.canton_party_id) {
+      // Mirror to localStorage so refresh() can restore it (workaround for
+      // /auth/me not yet returning the field).
+      setCantonPartyId(updated.canton_party_id);
+    }
+    setState((prev) =>
+      prev.status === "authenticated" ? { ...prev, user: updated } : prev,
+    );
+    return updated;
+  }, []);
+
   const value = useMemo<AuthContextValue>(() => {
     const isAuthed = state.status === "authenticated";
     const hasProfile = isAuthed && (state.driver !== null || state.investor !== null);
@@ -274,6 +297,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       createInvestorProfile,
       updateEmail,
       deleteAccount,
+      linkWallet,
     };
   }, [
     state,
@@ -285,6 +309,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     createInvestorProfile,
     updateEmail,
     deleteAccount,
+    linkWallet,
   ]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -10,6 +10,10 @@ const TOKEN_KEY = "3rike.token";
 const SESSION_ID_KEY = "3rike.sessionId";
 const DRIVER_ID_KEY = "3rike.driverId";
 const INVESTOR_ID_KEY = "3rike.investorId";
+// canton_party_id is cached locally because GET /auth/me doesn't currently
+// include it in its response, even after PUT /auth/wallet succeeds. Once the
+// backend exposes it on /me consistently, this cache becomes a no-op.
+const CANTON_PARTY_KEY = "3rike.cantonPartyId";
 
 export type StoredSession = {
   token: string;
@@ -33,6 +37,15 @@ export function clearSession(): void {
   localStorage.removeItem(SESSION_ID_KEY);
   localStorage.removeItem(DRIVER_ID_KEY);
   localStorage.removeItem(INVESTOR_ID_KEY);
+  localStorage.removeItem(CANTON_PARTY_KEY);
+}
+
+export function getCantonPartyId(): string | null {
+  return localStorage.getItem(CANTON_PARTY_KEY);
+}
+
+export function setCantonPartyId(id: string): void {
+  localStorage.setItem(CANTON_PARTY_KEY, id);
 }
 
 export function getToken(): string | null {

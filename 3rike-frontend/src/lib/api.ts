@@ -107,6 +107,7 @@ export type User = {
   id: number;
   email: string;
   role: Role;
+  canton_party_id?: string;
   created_at: string;
 };
 
@@ -183,6 +184,36 @@ export function revokeSession(sessionId: string): Promise<void> {
   return request<void>(`/auth/sessions/${encodeURIComponent(sessionId)}`, {
     method: "DELETE",
   });
+}
+
+// =============================================================================
+// Canton Wallet
+// =============================================================================
+
+/**
+ * Live wallet balance fetched from the Canton ledger. All quantity fields are
+ * decimal strings (Canton uses arbitrary-precision decimals, so we don't lose
+ * precision by parsing them as numbers — keep them as strings and format on
+ * display).
+ */
+export type WalletBalance = {
+  round: number;
+  effective_unlocked_qty: string;
+  effective_locked_qty: string;
+  total_holding_fees: string;
+};
+
+export function linkWallet(payload: {
+  canton_party_id: string;
+}): Promise<User> {
+  return request<User>("/auth/wallet", {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function getWalletBalance(): Promise<WalletBalance> {
+  return request<WalletBalance>("/auth/wallet/balance");
 }
 
 // =============================================================================
