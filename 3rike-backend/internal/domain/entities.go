@@ -14,11 +14,13 @@ const (
 
 // User is the shared auth entity.
 type User struct {
-	ID           uint      `json:"id"`
-	Email        string    `json:"email"`
-	PasswordHash string    `json:"-"`
-	Role         Role      `json:"role"`
-	CreatedAt    time.Time `json:"created_at"`
+	ID             uint      `json:"id"`
+	Email          string    `json:"email"`
+	PasswordHash   string    `json:"-"`
+	Role           Role      `json:"role"`
+	KeycloakSub    string    `json:"keycloak_sub,omitempty"` // Keycloak subject claim
+	CantonPartyID  string    `json:"canton_party_id,omitempty"`
+	CreatedAt      time.Time `json:"created_at"`
 }
 
 // Driver profile linked to a User.

@@ -20,6 +20,10 @@ type Config struct {
 	OIDCClientID string
 	OIDCUsername string
 	OIDCPassword string
+
+	// Canton party derivation
+	CantonParticipantFingerprint string
+	CantonOperatorParty          string
 }
 
 func Load() *Config {
@@ -37,6 +41,9 @@ func Load() *Config {
 		OIDCClientID: getEnv("OIDC_CLIENT_ID", ""),
 		OIDCUsername: getEnv("OIDC_USERNAME", ""),
 		OIDCPassword: getEnv("OIDC_PASSWORD", ""),
+
+		CantonParticipantFingerprint: getEnv("CANTON_PARTICIPANT_FINGERPRINT", ""),
+		CantonOperatorParty:          getEnv("CANTON_OPERATOR_PARTY", ""),
 	}
 }
 

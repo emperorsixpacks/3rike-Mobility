@@ -16,6 +16,7 @@ type UserService interface {
 	UpdateProfile(ctx context.Context, userID uint, email string) (*User, error)
 	ChangePassword(ctx context.Context, userID uint, oldPassword, newPassword string) error
 	DeleteAccount(ctx context.Context, userID uint) error
+	LinkWallet(ctx context.Context, userID uint, cantonPartyID string) (*User, error)
 }
 
 type DriverService interface {
@@ -35,8 +36,8 @@ type TricycleService interface {
 	Create(ctx context.Context, t *Tricycle) (*Tricycle, error)
 	GetByID(ctx context.Context, id uint) (*Tricycle, error)
 	List(ctx context.Context) ([]Tricycle, error)
-	Tokenize(ctx context.Context, id uint) (*Tricycle, error)
-	Fractionalize(ctx context.Context, id uint, totalFractions int) (*Tricycle, error)
+	Tokenize(ctx context.Context, id uint, callerParty string) (*Tricycle, error)
+	Fractionalize(ctx context.Context, id uint, totalFractions int, callerParty string) (*Tricycle, error)
 }
 
 type PaymentService interface {
