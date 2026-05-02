@@ -1,8 +1,6 @@
 package handler
 
 import (
-	"net/http"
-
 	"github.com/3rike12/3rike-backend/internal/domain"
 	"github.com/3rike12/3rike-backend/pkg/canton"
 	"github.com/gofiber/fiber/v2"
@@ -94,33 +92,11 @@ func (h *UserHandler) WalletBalance(c *fiber.Ctx) error {
 	if h.validatorURL == "" {
 		return c.Status(fiber.StatusServiceUnavailable).JSON(fiber.Map{"error": "validator URL not configured"})
 	}
-	// Use the user's own Bearer token so the balance is theirs, not the operator's.
-	authHeader := c.Get("Authorization")
-	req, err := http.NewRequestWithContext(c.Context(), http.MethodGet,
-		h.validatorURL+"/api/validator/v0/wallet/balance", nil)
-	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
-	}
-	req.Header.Set("Authorization", authHeader)
-	resp, err := http.DefaultClient.Do(req)
+	bal, err := h.canton.GetWalletBalance(c.Context(), h.validatorURL, c.Get("Authorization"))
 	if err != nil {
 		return c.Status(fiber.StatusBadGateway).JSON(fiber.Map{"error": err.Error()})
 	}
-	defer resp.Body.Close()
-	c.Set(fiber.HeaderContentType, fiber.MIMEApplicationJSON)
-	c.Status(resp.StatusCode)
-	var buf = make([]byte, 0, 256)
-	tmp := make([]byte, 512)
-	for {
-		n, err := resp.Body.Read(tmp)
-		if n > 0 {
-			buf = append(buf, tmp[:n]...)
-		}
-		if err != nil {
-			break
-		}
-	}
-	return c.Send(buf)
+	return c.JSON(bal)
 }
 
 // LinkWallet godoc

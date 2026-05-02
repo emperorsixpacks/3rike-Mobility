@@ -16,9 +16,7 @@ import (
 // DAML Int and Decimal fields must be serialized as strings per the JSON Ledger API spec.
 const TrikeContractsPkgID = "fb36f0cfcfe6c4b2a24f458f5ba06bfc697fa0584b13f44ae3d3568a294d4c19"
 
-// PartyID constructs a Canton party ID from a Keycloak subject claim and the
-// participant node fingerprint (the fixed suffix after :: for all users on the same node).
-// e.g. PartyID("70af8ee8-...", "1220195a...") → "70af8ee8-...::1220195a..."
+// PartyID constructs a Canton party ID from a Keycloak sub + participant fingerprint.
 func PartyID(keycloakSub, participantFingerprint string) string {
 	if keycloakSub == "" || participantFingerprint == "" {
 		return ""
@@ -32,30 +30,28 @@ type Client struct {
 	staticToken   string
 	tokenProvider *TokenProvider
 	httpClient    *http.Client
-	operatorParty string // pays transaction fees; first in actAs
+	operatorParty string // added to readAs so operator can observe all contracts
 }
 
-// New creates a Client with a static bearer token (or empty for stub mode).
 func New(baseURL, token string) *Client {
 	return &Client{baseURL: baseURL, staticToken: token, httpClient: &http.Client{}}
 }
 
-// NewWithTokenProvider creates a Client that auto-fetches tokens via Keycloak.
 func NewWithTokenProvider(baseURL string, tp *TokenProvider) *Client {
 	return &Client{baseURL: baseURL, tokenProvider: tp, httpClient: &http.Client{}}
 }
 
-// WithOperatorParty sets the operator party that co-signs and pays fees for all commands.
+// WithOperatorParty sets the operator party as an observer on all contracts.
+// The user (caller) still pays their own transaction fees.
 func (c *Client) WithOperatorParty(party string) *Client {
 	c.operatorParty = party
 	return c
 }
 
-// actAs returns [operatorParty, userParty] if operator is set, else [userParty].
-// Operator is first so it pays the traffic fees.
-func (c *Client) actAs(userParty string) []string {
+// readAs returns the user party + operator party (if set) as observers.
+func (c *Client) readAs(userParty string) []string {
 	if c.operatorParty != "" && c.operatorParty != userParty {
-		return []string{c.operatorParty, userParty}
+		return []string{userParty, c.operatorParty}
 	}
 	return []string{userParty}
 }
@@ -72,7 +68,9 @@ type TokenizeResult struct {
 	ContractID string `json:"contractId"`
 }
 
-// Tokenize submits a CreateTricycleToken command to the Canton ledger.
+// Tokenize submits a CreateTricycleToken command.
+// actAs = [driverParty] — driver pays their own fees.
+// readAs = [driverParty, operatorParty] — operator can observe.
 func (c *Client) Tokenize(ctx context.Context, tricycleID uint, driverParty string) (*TokenizeResult, error) {
 	if c.baseURL == "" {
 		return &TokenizeResult{ContractID: fmt.Sprintf("stub-contract-%d", tricycleID)}, nil
@@ -82,7 +80,7 @@ func (c *Client) Tokenize(ctx context.Context, tricycleID uint, driverParty stri
 		"commandId":  fmt.Sprintf("tokenize-%d-%d", tricycleID, time.Now().UnixNano()),
 		"workflowId": fmt.Sprintf("tokenize-%d", tricycleID),
 		"actAs":      []string{driverParty},
-		"readAs":     []string{driverParty},
+		"readAs":     c.readAs(driverParty),
 		"commands": []map[string]any{{
 			"CreateCommand": map[string]any{
 				"templateId": TrikeContractsPkgID + ":TricycleToken:TricycleToken",
@@ -120,22 +118,23 @@ type FractionalizeResult struct {
 }
 
 // Fractionalize exercises the Fractionalize choice on a TricycleToken contract.
-func (c *Client) Fractionalize(ctx context.Context, contractID string, totalFractions int, operatorParty string) (*FractionalizeResult, error) {
+// actAs = [callerParty] — caller pays their own fees.
+func (c *Client) Fractionalize(ctx context.Context, contractID string, totalFractions int, callerParty string) (*FractionalizeResult, error) {
 	if c.baseURL == "" {
 		return &FractionalizeResult{ContractID: contractID, TotalFractions: totalFractions}, nil
 	}
 
 	payload := map[string]any{
 		"commandId": fmt.Sprintf("fractionalize-%s-%d", contractID[:8], time.Now().UnixNano()),
-		"actAs":     c.actAs(operatorParty),
-		"readAs":    []string{operatorParty},
+		"actAs":     []string{callerParty},
+		"readAs":    c.readAs(callerParty),
 		"commands": []map[string]any{{
 			"ExerciseCommand": map[string]any{
 				"templateId": TrikeContractsPkgID + ":TricycleToken:TricycleToken",
 				"contractId": contractID,
 				"choice":     "Fractionalize",
 				"choiceArgument": map[string]any{
-					"investors":    []string{operatorParty},
+					"investors":    []string{callerParty},
 					"unitsEach":    fmt.Sprintf("%d", totalFractions),
 					"pricePerUnit": "1.0",
 				},
@@ -156,24 +155,20 @@ func (c *Client) Fractionalize(ctx context.Context, contractID string, totalFrac
 
 // WalletBalance holds a user's CC balance from the Canton wallet.
 type WalletBalance struct {
-	Round               int    `json:"round"`
+	Round                int    `json:"round"`
 	EffectiveUnlockedQty string `json:"effective_unlocked_qty"`
 	EffectiveLockedQty   string `json:"effective_locked_qty"`
 	TotalHoldingFees     string `json:"total_holding_fees"`
 }
 
-// GetWalletBalance fetches the CC balance for the authenticated user from the validator wallet API.
-func (c *Client) GetWalletBalance(ctx context.Context, validatorURL string) (*WalletBalance, error) {
-	tok, err := c.bearerToken()
-	if err != nil {
-		return nil, err
-	}
+// GetWalletBalance fetches CC balance from the validator wallet API using the provided token.
+func (c *Client) GetWalletBalance(ctx context.Context, validatorURL, bearerToken string) (*WalletBalance, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, validatorURL+"/api/validator/v0/wallet/balance", nil)
 	if err != nil {
 		return nil, err
 	}
-	if tok != "" {
-		req.Header.Set("Authorization", "Bearer "+tok)
+	if bearerToken != "" {
+		req.Header.Set("Authorization", bearerToken) // pass through as-is (includes "Bearer " prefix)
 	}
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
@@ -186,6 +181,7 @@ func (c *Client) GetWalletBalance(ctx context.Context, validatorURL string) (*Wa
 	var bal WalletBalance
 	return &bal, json.NewDecoder(resp.Body).Decode(&bal)
 }
+
 func extractContractID(data []byte) (string, error) {
 	var result struct {
 		TransactionTree struct {
