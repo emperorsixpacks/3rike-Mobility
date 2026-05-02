@@ -6,6 +6,8 @@ import DepositModal from "../deposit";
 import WithdrawOptions from "../withdraw/options";
 import BottomNav from "@/components/ui/bottom-nav";
 import Avatar from "@/components/ui/avatar";
+import Skeleton from "@/components/ui/skeleton";
+import HowItWorks, { shouldShowHowItWorks } from "./how-it-works";
 import { useAuth } from "@/lib/auth";
 import { useSavings } from "@/lib/use-savings";
 import { useEarnings } from "@/lib/use-earnings";
@@ -23,8 +25,8 @@ const POST_KYC_KEY = "3rike.postKycStatus"; // overrides only — only set after
 export default function DriverDashboard() {
   const navigate = useNavigate();
   const { user, driver } = useAuth();
-  const { balance: savingsBalance, refresh: refreshSavings } = useSavings();
-  const { total: lifetimeEarnings } = useEarnings();
+  const { balance: savingsBalance, isLoading: savingsLoading, refresh: refreshSavings } = useSavings();
+  const { total: lifetimeEarnings, loading: earningsLoading } = useEarnings();
   const {
     balance: walletBalance,
     loading: walletLoading,
@@ -38,6 +40,9 @@ export default function DriverDashboard() {
   // State to control the modals
   const [isDepositOpen, setIsDepositOpen] = useState(false);
   const [isWithdrawOpen, setIsWithdrawOpen] = useState(false);
+  // First-run "How 3rike works" overlay — initialized from localStorage so
+  // returning users don't re-see it.
+  const [howItWorksOpen, setHowItWorksOpen] = useState(() => shouldShowHowItWorks());
 
   // Re-derive when the driver profile changes (e.g. after KYC).
   useEffect(() => {
@@ -153,9 +158,7 @@ export default function DriverDashboard() {
                       Tap to link wallet →
                     </h1>
                   ) : walletLoading && !walletBalance ? (
-                    <div className="h-12 flex items-center">
-                      <div className="w-7 h-7 border-3 border-white/40 border-t-white rounded-full animate-spin" />
-                    </div>
+                    <Skeleton className="h-10 w-40 bg-white/20" />
                   ) : (
                     <h1 className="text-4xl font-bold">
                       {formatCC(walletBalance?.effective_unlocked_qty)}
@@ -200,9 +203,13 @@ export default function DriverDashboard() {
               </div>
               <div>
                 <p className="text-xs text-gray-400 mb-1">Savings Balance</p>
-                <h3 className="text-xl font-light text-gray-800">
-                  ${" "}{formatBalance(savingsBalance)}
-                </h3>
+                {savingsLoading ? (
+                  <Skeleton className="h-7 w-24" />
+                ) : (
+                  <h3 className="text-xl font-light text-gray-800">
+                    ${" "}{formatBalance(savingsBalance)}
+                  </h3>
+                )}
               </div>
             </div>
 
@@ -213,9 +220,13 @@ export default function DriverDashboard() {
               </div>
               <div>
                 <p className="text-xs text-gray-400 mb-1">Lifetime Earnings</p>
-                <h3 className="text-xl font-light text-gray-800">
-                  $ {formatBalance(lifetimeEarnings)}
-                </h3>
+                {earningsLoading ? (
+                  <Skeleton className="h-7 w-24" />
+                ) : (
+                  <h3 className="text-xl font-light text-gray-800">
+                    $ {formatBalance(lifetimeEarnings)}
+                  </h3>
+                )}
               </div>
             </div>
           </div>
@@ -374,6 +385,9 @@ export default function DriverDashboard() {
         </div>
 
         <BottomNav />
+
+        {/* First-run onboarding — only shows once per browser */}
+        {howItWorksOpen && <HowItWorks onClose={() => setHowItWorksOpen(false)} />}
       </div>
 
       {/* deposit modal */}

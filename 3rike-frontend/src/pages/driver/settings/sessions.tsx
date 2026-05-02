@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, Smartphone } from "lucide-react";
 import MobileFrame from "@/components/ui/mobile-frame";
+import Skeleton from "@/components/ui/skeleton";
 import { ApiError, listSessions, revokeSession, type Session } from "@/lib/api";
 import { getSession } from "@/lib/session";
 
@@ -63,8 +64,19 @@ export default function Sessions() {
       </p>
 
       {sessions === null && (
-        <div className="flex-1 flex items-center justify-center">
-          <div className="w-8 h-8 border-3 border-[#01C259] border-t-transparent rounded-full animate-spin" />
+        <div className="space-y-3">
+          {[0, 1].map((i) => (
+            <div
+              key={i}
+              className="bg-white border border-gray-100 rounded-2xl p-4 flex items-center gap-3"
+            >
+              <Skeleton className="w-10 h-10 rounded-full" />
+              <div className="flex-1 space-y-2">
+                <Skeleton className="h-3.5 w-24" />
+                <Skeleton className="h-2.5 w-40" />
+              </div>
+            </div>
+          ))}
         </div>
       )}
 
