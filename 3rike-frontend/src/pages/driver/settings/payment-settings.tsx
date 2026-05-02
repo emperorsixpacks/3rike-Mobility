@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { ChevronRight } from "lucide-react";
+import MobileFrame from "@/components/ui/mobile-frame";
 
 export default function PaymentSettings() {
     const navigate = useNavigate();
@@ -35,7 +36,7 @@ export default function PaymentSettings() {
     );
 
     return (
-        <div className="fixed inset-0 bg-white flex flex-col h-full">
+        <MobileFrame innerClassName="flex flex-col">
 
             {/* --- Header --- */}
             <div className="relative flex items-center justify-center pt-12 pb-6 px-6 bg-white shrink-0">
@@ -92,7 +93,7 @@ export default function PaymentSettings() {
                 </div>
 
             </div>
-            
-        </div>
+
+        </MobileFrame>
     );
 }

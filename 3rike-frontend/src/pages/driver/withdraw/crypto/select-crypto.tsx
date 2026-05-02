@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import MobileFrame from "@/components/ui/mobile-frame";
 
 export default function SelectCryptoAsset() {
     const navigate = useNavigate();
@@ -22,7 +23,8 @@ export default function SelectCryptoAsset() {
     );
 
     return (
-        <div className="fixed inset-0 bg-gray-500/20 backdrop-blur-sm flex items-end sm:items-center justify-center  z-50">
+        <MobileFrame>
+        <div className="absolute inset-0 bg-gray-500/20 backdrop-blur-sm flex items-end sm:items-center justify-center  z-50">
             
             {/* Main Card Container */}
             <div className="w-full h-[85vh] sm:h-auto sm:max-w-md bg-white rounded-t-[32px] sm:rounded-[32px] p-6 flex flex-col shadow-2xl animate-in slide-in-from-bottom duration-300">
@@ -67,5 +69,6 @@ export default function SelectCryptoAsset() {
 
             </div>
         </div>
+        </MobileFrame>
     );
 }

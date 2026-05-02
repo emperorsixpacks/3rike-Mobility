@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Link, useNavigate } from "react-router-dom";
+import MobileFrame from "@/components/ui/mobile-frame";
 
 
 export default function VerificationFailed() {
@@ -9,7 +10,7 @@ export default function VerificationFailed() {
     navigate('/driver/verification/retry')
   };
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-6">
+    <MobileFrame innerBg="bg-gray-50" innerClassName="flex flex-col items-center justify-center p-6">
       <div className="w-full max-w-sm flex flex-col items-center text-center animate-in zoom-in-95 duration-500">
 
         {/* --- FAILED BADGE ICON --- */}
@@ -44,6 +45,6 @@ export default function VerificationFailed() {
         </div>
 
       </div>
-    </div>
+    </MobileFrame>
   );
 }

@@ -24,6 +24,27 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { CalendarIcon, UploadCloud, CheckCircle2, AlertCircle } from "lucide-react";
 import React from "react";
+import { ApiError } from "@/lib/api";
+import { useAuth } from "@/lib/auth";
+import MobileFrame from "@/components/ui/mobile-frame";
+
+const PENDING_PROFILE_KEY = "3rike.pendingDriverProfile";
+
+type PendingProfile = {
+    firstName?: string;
+    lastName?: string;
+    phone?: string;
+    pin?: string;
+};
+
+function readPendingProfile(): PendingProfile {
+    try {
+        const raw = localStorage.getItem(PENDING_PROFILE_KEY);
+        return raw ? (JSON.parse(raw) as PendingProfile) : {};
+    } catch {
+        return {};
+    }
+}
 
 // --- VALIDATION SCHEMAS ---
 const formSchema = z.object({
@@ -47,8 +68,11 @@ type FormValues = z.infer<typeof formSchema>;
 export default function VerifyAccountForm() {
     const [currentStep, setCurrentStep] = useState(1);
     const navigate = useNavigate();
+    const { createDriverProfile } = useAuth();
     const [loading, setLoading] = useState(false);
+    const [serverError, setServerError] = useState<string | null>(null);
     const [open, setOpen] = React.useState(false);
+    const pending = React.useMemo(() => readPendingProfile(), []);
 
     // for page 3 of the verificiation
     const [selfiePreview, setSelfiePreview] = useState<string | null>(null);
@@ -78,16 +102,17 @@ export default function VerifyAccountForm() {
             // e.target.value = '';
         }
     };
-    // Initialize form
+    // Initialize form. Pre-fill name + phone from the create-account step
+    // (stashed under "3rike.pendingDriverProfile") so the user doesn't retype.
     const form = useForm<FormValues>({
         resolver: zodResolver(formSchema),
         mode: "onChange",
         defaultValues: {
-            firstName: "",
-            lastName: "",
+            firstName: pending.firstName ?? "",
+            lastName: pending.lastName ?? "",
             gender: "",
             email: "",
-            phone: "",
+            phone: pending.phone ?? "",
             address: "",
             region: "",
             country: "",
@@ -122,20 +147,29 @@ export default function VerifyAccountForm() {
     };
 
     const onSubmit = async (data: FormValues) => {
+        setServerError(null);
         setLoading(true);
-        console.log("Final KYC Data:", data);
-
-        // Simulate API Call
-        setTimeout(() => {
+        try {
+            // Backend currently only persists name/phone/country on the driver
+            // record. The richer KYC fields (address, ID images, selfie) are
+            // collected here for the product flow but will be wired to a
+            // dedicated KYC endpoint when the backend exposes one.
+            await createDriverProfile({
+                full_name: `${data.firstName.trim()} ${data.lastName.trim()}`.trim(),
+                phone: data.phone.trim(),
+                country: data.country.trim(),
+            });
+            // Pending stash served its purpose; clean up.
+            localStorage.removeItem(PENDING_PROFILE_KEY);
+            navigate("/driver/verification/success");
+        } catch (err) {
+            setServerError(messageFor(err));
+            // Treat server failures as the KYC-failed branch so the user has a
+            // clear retry path.
+            navigate("/driver/verification/failed");
+        } finally {
             setLoading(false);
-            // Navigate based on success/failure logic (simulated here)
-            const isSuccess = true;
-            if (isSuccess) {
-                navigate("/driver/verification/success");
-            } else {
-                navigate("/driver/verification/failed");
-            }
-        }, 2000);
+        }
     };
 
     // Helper for file upload UI
@@ -233,7 +267,7 @@ export default function VerifyAccountForm() {
     };
 
     return (
-        <div className="min-h-screen bg-white flex justify-center py-10 px-4">
+        <MobileFrame innerClassName="py-10 px-4">
             <div className="w-full max-w-md bg-white p-3 min-h-200 flex flex-col">
 
                 {/* Header Navigation */}
@@ -611,6 +645,12 @@ export default function VerifyAccountForm() {
                             </div>
                         )}
 
+                        {serverError && (
+                            <p className="text-sm text-red-500 text-center pt-4" role="alert">
+                                {serverError}
+                            </p>
+                        )}
+
                         {/* --- FOOTER BUTTON --- */}
                         <div className="mt-auto pt-6">
                             {currentStep < 3 ? (
@@ -639,6 +679,20 @@ export default function VerifyAccountForm() {
                     </form>
                 </Form>
             </div>
-        </div>
+        </MobileFrame>
     );
+}
+
+function messageFor(err: unknown): string {
+    if (err instanceof ApiError) {
+        switch (err.code) {
+            case "timeout":
+                return "The server is waking up — please try again.";
+            case "network_error":
+                return "Couldn't reach the server. Check your connection.";
+            default:
+                return "We couldn't submit your verification. Please try again.";
+        }
+    }
+    return "We couldn't submit your verification. Please try again.";
 }

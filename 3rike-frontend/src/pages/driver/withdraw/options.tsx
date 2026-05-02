@@ -37,7 +37,7 @@ export default function WithdrawOptions({ isOpen, onClose }: WithdrawOptionsProp
             {/* Modal Sheet */}
             <div
                 className={`
-                    relative w-full bg-white rounded-3xl p-6 pb-10 shadow-2xl 
+                    relative w-full max-w-100 bg-white rounded-3xl p-6 pb-10 shadow-2xl
                     transform transition-transform duration-300 ease-out z-10
                     ${isOpen ? "translate-y-0" : "translate-y-full"}
                 `}

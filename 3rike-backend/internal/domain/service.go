@@ -66,3 +66,10 @@ type WaitlistService interface {
 	Stats(ctx context.Context) (totalCount int64, err error)
 	GetByCode(ctx context.Context, code string) (entry *WaitlistEntry, totalCount int64, referralCount int64, err error)
 }
+
+// FractionService handles user-driven purchases of tricycle fractions
+// (the "buy 2 fleets / 10 shares" flow). The investor profile is lazily
+// created on first purchase so callers don't need a separate signup step.
+type FractionService interface {
+	Buy(ctx context.Context, userID uint, tricycleID uint, units int) (*Fraction, error)
+}

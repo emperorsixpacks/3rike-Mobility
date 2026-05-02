@@ -19,6 +19,7 @@ type Services struct {
 	Savings  domain.SavingsService
 	Yield    domain.YieldService
 	Waitlist domain.WaitlistService
+	Fraction domain.FractionService
 }
 
 func New(db *gorm.DB, cantonClient *canton.Client, jwtSecret string, rdb *redis.Client) *Services {
@@ -44,5 +45,6 @@ func New(db *gorm.DB, cantonClient *canton.Client, jwtSecret string, rdb *redis.
 		Savings:  newSavingsService(savings),
 		Yield:    newYieldService(yields, fractions),
 		Waitlist: newWaitlistService(waitlist),
+		Fraction: newFractionService(tricycles, investors, fractions),
 	}
 }

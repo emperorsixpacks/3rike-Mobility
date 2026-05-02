@@ -3,11 +3,17 @@ import { Switch } from "@/components/ui/switch";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Bell, Home } from "lucide-react";
+import { useSavings } from "@/lib/use-savings";
 
 
 export default function SavingsDashboard() {
     const navigate = useNavigate();
     const [changeCurrency, setChangeCurrency] = useState(true);
+    const { balance } = useSavings();
+    const formattedBalance = balance.toLocaleString("en-US", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+    });
 
     const handleTargetSavings = () => {
         navigate('/driver/savings/target')
@@ -57,7 +63,7 @@ export default function SavingsDashboard() {
 
                             <div className="flex flex-row justify-between">
                                 <h1 className="text-4xl font-bold ">
-                                    {changeCurrency ? "$ 0.00" : "₵ 0.00"}
+                                    {changeCurrency ? `$ ${formattedBalance}` : `₵ ${formattedBalance}`}
                                 </h1>
 
                                 {/* Custom Toggle Switch */}

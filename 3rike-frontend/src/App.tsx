@@ -1,13 +1,16 @@
 import "./App.css";
 import { Routes, Route, BrowserRouter } from "react-router-dom";
 import Layout from "@/components/ui/layout";
-import { CreateAccountForm, ForgotPasswordEmailForm, ForgotPasswordPhoneForm, Landing, LoginForm, NoMatch, Onboarding, DriverDashboard, VerifyAccountForm, VerificationSuccess, VerificationFailed, VerificationFailedForm, LoanDashboard, LoanRequestSuccess, LoanNotification, SavingsOnboarding, SavingsDashboard, Loan, Savings, Verification, SavingsTargetDashboard, SavingsTargetForm, SavingsSummary, SavingsNotification, SavingsTargetSuccess, AiDashboard, DriverNotification, Withdraw, SetPinWithdraw, WithdrawBankDetails, WithdrawSendMoney, Settings, SettingsHome, SettingsProfile, PaymentSettings, ChangePaymentPin, WithdrawCryptoAsset, Investment, InvestmentHome, Own3rike, Own3rikeDetails, Welcome3riker, ThreeDetails } from "./pages";
+import { CreateAccountForm, ForgotPasswordEmailForm, ForgotPasswordPhoneForm, Landing, LoginForm, NoMatch, Onboarding, DriverDashboard, VerifyAccountForm, VerificationSuccess, VerificationFailed, VerificationFailedForm, LoanDashboard, LoanRequestSuccess, LoanNotification, SavingsOnboarding, SavingsDashboard, Loan, Savings, Verification, SavingsTargetDashboard, SavingsTargetForm, SavingsSummary, SavingsNotification, SavingsTargetSuccess, AiDashboard, DriverNotification, Withdraw, SetPinWithdraw, WithdrawBankDetails, WithdrawSendMoney, Settings, SettingsHome, SettingsProfile, PaymentSettings, ChangePaymentPin, WithdrawCryptoAsset, Investment, InvestmentHome, Own3rike, Own3rikeDetails, Welcome3riker, ThreeDetails, InvestmentPortfolio, ActiveLoan, EditEmail, ChangePassword, Sessions } from "./pages";
 import SelectCryptoAsset from "./pages/driver/withdraw/crypto/select-crypto";
+import { AuthProvider } from "@/lib/auth";
+import RequireAuth from "@/lib/require-auth";
 
 
 function App() {
   return (
     <BrowserRouter>
+      <AuthProvider>
       <div style={{ fontFamily: "Geist" }}>
         <Routes>
 
@@ -23,7 +26,9 @@ function App() {
             <Route path="/" element={<Landing />} />
           </Route>
 
-          {/* Driver */}
+          {/* Driver — protected. RequireAuth resolves /auth/me on boot and
+              bounces unauthenticated users to /login. */}
+          <Route element={<RequireAuth />}>
           <Route path="/driver">
             <Route index element={<DriverDashboard />} />
             <Route path="3rikeAi" element={<AiDashboard />} />
@@ -41,6 +46,7 @@ function App() {
               <Route index element={<LoanDashboard />} />
               <Route path="submitted" element={<LoanRequestSuccess />} />
               <Route path="notification" element={<LoanNotification />} />
+              <Route path="active/:id" element={<ActiveLoan />} />
             </Route>
 
             {/* Withdraw routes */}
@@ -66,6 +72,7 @@ function App() {
             {/* Investment route */}
             <Route path="investment" element={<Investment />}>
               <Route index element={<InvestmentHome />} />
+              <Route path="portfolio" element={<InvestmentPortfolio />} />
             </Route>
 
             {/* Own a 3rike (post-approval ownership flow) */}
@@ -83,9 +90,13 @@ function App() {
               <Route path="profile" element={<SettingsProfile />} />
               <Route path="payment" element={<PaymentSettings />} />
               <Route path="change-pin" element={<ChangePaymentPin />} />
+              <Route path="edit-email" element={<EditEmail />} />
+              <Route path="change-password" element={<ChangePassword />} />
+              <Route path="sessions" element={<Sessions />} />
             </Route>
 
             <Route path="*" element={<NoMatch />} />
+          </Route>
           </Route>
 
 
@@ -97,6 +108,7 @@ function App() {
 
         </Routes>
       </div>
+      </AuthProvider>
     </BrowserRouter>
   );
 }

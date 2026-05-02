@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import MobileFrame from "@/components/ui/mobile-frame";
 
 const onboardingData = [
     {
@@ -66,20 +67,21 @@ export default function Onboarding() {
     // --- SPLASH SCREEN ---
     if (currentScreen === -1) {
         return (
-            <div className="fixed inset-0 w-full h-dvh flex items-center justify-center bg-white">
+            <MobileFrame innerClassName="flex items-center justify-center">
                 <img src="/logo.svg" alt="empty" className="w-60 h-60" />
-            </div>
+            </MobileFrame>
         );
     }
 
     const screenData = onboardingData[currentScreen];
 
     return (
-        <div
-            className="fixed inset-0 w-full bg-black flex flex-col overflow-hidden"
-            onTouchStart={handleTouchStart}
-            onTouchEnd={handleTouchEnd}
-        >
+        <MobileFrame innerBg="bg-black" innerClassName="flex flex-col overflow-hidden">
+            <div
+                className="absolute inset-0 flex flex-col"
+                onTouchStart={handleTouchStart}
+                onTouchEnd={handleTouchEnd}
+            >
             {/* Full Screen Background Wrapper */}
             <div className="absolute inset-0 z-0 w-full h-full bg-black bg-[radial-gradient(circle_at_top_center,var(--tw-gradient-stops))] from-[#01C259]/30 via-black to-black flex items-center justify-center">
 
@@ -130,6 +132,7 @@ export default function Onboarding() {
                     </Button>
                 </div>
             </div>
-        </div>
+            </div>
+        </MobileFrame>
     );
 }

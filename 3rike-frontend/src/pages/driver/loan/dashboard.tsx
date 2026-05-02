@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { useNavigate } from "react-router-dom";
@@ -13,6 +13,8 @@ import {
     FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { ApiError, applyForLoan } from "@/lib/api";
+import { useAuth } from "@/lib/auth";
 
 // Updated Schema to handle amount as a number string and duration
 const formSchema = z.object({
@@ -26,7 +28,15 @@ const formSchema = z.object({
 
 export default function LoanDashboard() {
     const navigate = useNavigate();
+    const { driver } = useAuth();
     const [changeCurrency, setChangeCurrency] = useState(true);
+    const [submitting, setSubmitting] = useState(false);
+    const [serverError, setServerError] = useState<string | null>(null);
+    const [activeLoanId, setActiveLoanId] = useState<string | null>(null);
+
+    useEffect(() => {
+        setActiveLoanId(localStorage.getItem("3rike.activeLoanId"));
+    }, []);
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
@@ -59,33 +69,51 @@ export default function LoanDashboard() {
     const currencySymbol = changeCurrency ? "$" : "₵";
 
     async function onSubmit(data: z.infer<typeof formSchema>) {
-        console.log("Submitted Data:", {
-            ...data,
-            interest,
-            processingFee,
-            totalPayback
-        });
+        if (!driver) {
+            setServerError("Complete your verification before applying for a loan.");
+            return;
+        }
+        setServerError(null);
+        setSubmitting(true);
 
-        // 1. Calculate the specific due date based on the duration selected
-        const date = new Date();
-        date.setDate(date.getDate() + Number(durationValue));
-        const formattedDueDate = date.toLocaleDateString('en-GB', {
-            day: 'numeric',
-            month: 'long',
-            year: 'numeric'
-        });
+        // Compute weekly repayment: total payback / number of weeks (rounded up).
+        const weeks = Math.max(1, Math.ceil(Number(data.duration) / 7));
+        const weeklyRepayment = Math.round((totalPayback / weeks) * 100) / 100;
 
-        // 2. Pass all calculated data in the state object
-        navigate('/driver/loan/submitted', {
-            state: {
-                principal,
-                interest,
-                processingFee,
-                totalPayback,
-                currencySymbol,
-                dueDate: formattedDueDate
-            }
-        });
+        try {
+            const loan = await applyForLoan({
+                driver_id: driver.id,
+                principal_usdc: principal,
+                weekly_repayment: weeklyRepayment,
+            });
+            // Cache the loan id locally so the dashboard can surface a "View
+            // active loan" link on subsequent visits.
+            localStorage.setItem("3rike.activeLoanId", String(loan.id));
+
+            // Compute due date from selected duration.
+            const date = new Date();
+            date.setDate(date.getDate() + Number(durationValue));
+            const formattedDueDate = date.toLocaleDateString('en-GB', {
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric',
+            });
+
+            navigate('/driver/loan/submitted', {
+                state: {
+                    principal,
+                    interest,
+                    processingFee,
+                    totalPayback,
+                    currencySymbol,
+                    dueDate: formattedDueDate,
+                },
+            });
+        } catch (err) {
+            setServerError(messageForLoan(err));
+        } finally {
+            setSubmitting(false);
+        }
     };
 
     // Duration Options Configuration
@@ -138,6 +166,21 @@ export default function LoanDashboard() {
 
                 {/* Main Content Scroll Area */}
                 <div className="px-5 space-y-4">
+
+                    {/* Active loan banner — shown when there's a stored loan id */}
+                    {activeLoanId && (
+                        <button
+                            type="button"
+                            onClick={() => navigate(`/driver/loan/active/${activeLoanId}`)}
+                            className="w-full flex items-center justify-between p-3 rounded-xl bg-[#FDF5EA] border border-[#F8D7AB] text-left cursor-pointer hover:bg-[#fbf0e0] transition-colors"
+                        >
+                            <div>
+                                <p className="text-xs font-semibold text-[#EE9C2E]">You have an active loan</p>
+                                <p className="text-[11px] text-[#A86A1F]">Tap to view balance & repay</p>
+                            </div>
+                            <span className="text-[#EE9C2E] text-sm">›</span>
+                        </button>
+                    )}
 
                     {/* 1. GREEN BALANCE CARD */}
                     <div className="relative w-full h-40 rounded-3xl p-6 text-white overflow-hidden">
@@ -314,12 +357,19 @@ export default function LoanDashboard() {
                                 </div>
                             </div>
 
+                            {serverError && (
+                                <p className="text-sm text-red-500 text-center" role="alert">
+                                    {serverError}
+                                </p>
+                            )}
+
                             {/* Submit Button */}
                             <Button
                                 type="submit"
-                                className="w-full bg-[#01C259] hover:bg-[#019f4a] text-white rounded-xl py-6 text-base font-semibold shadow-lg shadow-green-100 transition-all mt-4"
+                                disabled={submitting}
+                                className="w-full bg-[#01C259] hover:bg-[#019f4a] text-white rounded-xl py-6 text-base font-semibold shadow-lg shadow-green-100 transition-all mt-4 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
                             >
-                                Submit Request
+                                {submitting ? "Submitting…" : "Submit Request"}
                             </Button>
 
                         </form>
@@ -329,4 +379,21 @@ export default function LoanDashboard() {
             </div>
         </div>
     );
+}
+
+function messageForLoan(err: unknown): string {
+    if (err instanceof ApiError) {
+        switch (err.code) {
+            case "timeout":
+                return "The server is waking up — please try again.";
+            case "network_error":
+                return "Couldn't reach the server. Check your connection.";
+            default:
+                if (err.status === 422 || err.status === 403) {
+                    return "Your credit score isn't high enough yet. Build up repayment history first.";
+                }
+                return "We couldn't submit your loan request. Please try again.";
+        }
+    }
+    return "We couldn't submit your loan request. Please try again.";
 }

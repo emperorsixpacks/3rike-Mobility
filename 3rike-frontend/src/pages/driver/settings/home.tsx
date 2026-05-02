@@ -1,18 +1,53 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { 
-  User, 
-  Lock, 
-  Key, 
-  Snowflake, 
-  MessageCircle, 
-  X, 
-  Info, 
-  ChevronRight, 
+import {
+  User,
+  Lock,
+  Key,
+  Mail,
+  Snowflake,
+  MessageCircle,
+  X,
+  Info,
+  ChevronRight,
 } from "lucide-react";
+import { useAuth } from "@/lib/auth";
+import { ApiError } from "@/lib/api";
+import MobileFrame from "@/components/ui/mobile-frame";
 
 export default function SettingsHome() {
     const navigate = useNavigate();
+    const { logout, deleteAccount } = useAuth();
+    const [signingOut, setSigningOut] = useState(false);
+    const [confirmDelete, setConfirmDelete] = useState(false);
+    const [deleting, setDeleting] = useState(false);
+    const [deleteError, setDeleteError] = useState<string | null>(null);
+
+    const handleSignOut = async () => {
+        setSigningOut(true);
+        try {
+            await logout();
+        } finally {
+            setSigningOut(false);
+        }
+    };
+
+    const handleDeleteAccount = async () => {
+        setDeleting(true);
+        setDeleteError(null);
+        try {
+            await deleteAccount();
+            // deleteAccount() navigates to /login on success.
+        } catch (err) {
+            setDeleteError(
+                err instanceof ApiError && err.code === "timeout"
+                    ? "The server is waking up — please try again."
+                    : "Couldn't close your account. Please try again.",
+            );
+            setDeleting(false);
+        }
+    };
 
     // Helper component for individual menu items
     const MenuItem = ({ icon: Icon, label, onClick }: any) => (
@@ -36,7 +71,7 @@ export default function SettingsHome() {
     );
 
     return (
-        <div className="fixed inset-0 bg-white flex flex-col h-full">
+        <MobileFrame innerClassName="flex flex-col">
             
             {/* --- Header --- */}
             <div className="relative flex items-center justify-center pt-12 pb-6 px-6 bg-white shrink-0">
@@ -59,20 +94,30 @@ export default function SettingsHome() {
                 
                 {/* Group 1: Profile & Security */}
                 <MenuGroup>
-                    <MenuItem 
-                        icon={User} 
-                        label="My Profile" 
-                        onClick={() => navigate("/driver/settings/profile")} 
+                    <MenuItem
+                        icon={User}
+                        label="My Profile"
+                        onClick={() => navigate("/driver/settings/profile")}
                     />
-                    <MenuItem 
-                        icon={Lock} 
-                        label="Payment Settings" 
-                        onClick={() => navigate("/driver/settings/payment")} 
+                    <MenuItem
+                        icon={Mail}
+                        label="Edit Email"
+                        onClick={() => navigate("/driver/settings/edit-email")}
                     />
-                    <MenuItem 
-                        icon={Key} 
-                        label="Login Settings" 
-                        onClick={() => {}} 
+                    <MenuItem
+                        icon={Lock}
+                        label="Payment Settings"
+                        onClick={() => navigate("/driver/settings/payment")}
+                    />
+                    <MenuItem
+                        icon={Key}
+                        label="Change Password"
+                        onClick={() => navigate("/driver/settings/change-password")}
+                    />
+                    <MenuItem
+                        icon={Key}
+                        label="Active Sessions"
+                        onClick={() => navigate("/driver/settings/sessions")}
                         showBorder={false}
                     />
                 </MenuGroup>
@@ -94,10 +139,10 @@ export default function SettingsHome() {
 
                 {/* Group 3: Close Account */}
                 <MenuGroup>
-                    <MenuItem 
-                        icon={X} 
-                        label="Close account" 
-                        onClick={() => {}} 
+                    <MenuItem
+                        icon={X}
+                        label="Close account"
+                        onClick={() => setConfirmDelete(true)}
                         showBorder={false}
                     />
                 </MenuGroup>
@@ -117,12 +162,59 @@ export default function SettingsHome() {
             {/* --- Footer Button --- */}
             <div className="absolute bottom-15 left-0 right-0 p-6 bg-white/80 backdrop-blur-sm">
                 <Button
-                    className="w-full py-6 rounded-xl bg-[#01C259] hover:bg-[#01b050] text-white text-lg font-light shadow-md transition-all active:scale-[0.98]"
+                    onClick={handleSignOut}
+                    disabled={signingOut}
+                    className="w-full py-6 rounded-xl bg-[#01C259] hover:bg-[#01b050] text-white text-lg font-light shadow-md transition-all active:scale-[0.98] cursor-pointer disabled:opacity-60"
                 >
-                    Sign Out
+                    {signingOut ? "Signing out…" : "Sign Out"}
                 </Button>
             </div>
 
-        </div>
+            {/* --- Close-account confirmation --- */}
+            {confirmDelete && (
+                <div className="absolute inset-0 z-50 bg-black/40 flex items-end justify-center animate-in fade-in duration-200">
+                    <div className="w-full bg-white rounded-t-3xl p-6 pb-8 animate-in slide-in-from-bottom duration-300">
+                        <div className="mx-auto w-12 h-2 bg-gray-300 rounded-full mb-6" />
+                        <h3 className="text-xl font-bold text-red-500 text-center mb-2">
+                            Close your account?
+                        </h3>
+                        <p className="text-sm text-[#909090] text-center mb-6">
+                            This permanently deletes your account, profile, savings,
+                            payments, and investments. <span className="font-medium text-gray-700">This can't be undone.</span>
+                        </p>
+
+                        {deleteError && (
+                            <p className="text-sm text-red-500 text-center mb-4" role="alert">
+                                {deleteError}
+                            </p>
+                        )}
+
+                        <div className="flex gap-3">
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                disabled={deleting}
+                                onClick={() => {
+                                    setConfirmDelete(false);
+                                    setDeleteError(null);
+                                }}
+                                className="flex-1 h-12 rounded-xl border border-gray-200 text-gray-700 cursor-pointer"
+                            >
+                                Cancel
+                            </Button>
+                            <Button
+                                type="button"
+                                disabled={deleting}
+                                onClick={handleDeleteAccount}
+                                className="flex-1 h-12 rounded-xl bg-red-500 hover:bg-red-600 text-white font-medium cursor-pointer disabled:opacity-60"
+                            >
+                                {deleting ? "Closing…" : "Yes, close it"}
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+        </MobileFrame>
     );
 }

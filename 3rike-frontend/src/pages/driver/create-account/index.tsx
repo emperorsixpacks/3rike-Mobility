@@ -18,15 +18,22 @@ import warning from "@/assets/warning.svg";
 import { useState } from "react";
 import { EyeClosed, EyeIcon } from "lucide-react";
 import { PinInput } from "@/components/ui/pinInput";
-// import Swal from "sweetalert2";
-// import axios from "axios";
+import { ApiError } from "@/lib/api";
+import { useAuth } from "@/lib/auth";
+import MobileFrame from "@/components/ui/mobile-frame";
 
+// Backend-required fields are email + password + role. The other fields
+// (name, phone, PIN) are collected here for UX but only persisted locally
+// for now — they'll be sent to /api/drivers in Phase 2 when we wire the
+// driver-profile-creation flow.
+//
+// Email is REQUIRED here even though the original UX marked it optional —
+// the backend treats it as the primary identifier.
 const formSchema = z.object({
     firstName: z.string().min(1, { message: "First name is required" }),
     lastName: z.string().min(1, { message: "Last name is required" }),
-    // phone: z.string().regex(/^\+?[1-9]\d{1,14}$/, { message: "Please enter a valid phone number" }),
     phone: z.string().min(11, { message: "Please enter a valid phone number" }),
-    email: z.string().optional(),
+    email: z.string().email({ message: "Enter a valid email" }),
     password: z.string().min(6, "Password must be at least 6 characters"),
     pin: z
         .string()
@@ -40,10 +47,14 @@ const formSchema = z.object({
     message: "PINs do not match",
 });
 
+const PENDING_PROFILE_KEY = "3rike.pendingDriverProfile";
+
 export default function CreateAccountForm() {
     const [currentTab, setCurrentTab] = useState(0);
     const navigate = useNavigate();
-    const [loading, ] = useState(false);
+    const { register: registerUser } = useAuth();
+    const [loading, setLoading] = useState(false);
+    const [serverError, setServerError] = useState<string | null>(null);
     const [showPassword, setShowPassword] = useState(false);
     const [showPin, setShowPin] = useState(false);
 
@@ -107,16 +118,41 @@ export default function CreateAccountForm() {
 
 
     async function onSubmit(data: z.infer<typeof formSchema>) {
-        console.log("Submitted Data:", data);
-        navigate("/driver");
-    };
+        setServerError(null);
+        setLoading(true);
+        try {
+            // Stash the local-only profile fields (name, phone, PIN). Phase 2
+            // will pick these up on the dashboard / KYC page and POST them to
+            // /api/drivers + payment-PIN setup.
+            localStorage.setItem(
+                PENDING_PROFILE_KEY,
+                JSON.stringify({
+                    firstName: data.firstName.trim(),
+                    lastName: data.lastName.trim(),
+                    phone: data.phone.trim(),
+                    pin: data.pin,
+                }),
+            );
+
+            await registerUser(
+                data.email.trim().toLowerCase(),
+                data.password,
+                "driver",
+            );
+            navigate("/driver", { replace: true });
+        } catch (err) {
+            setServerError(messageFor(err));
+        } finally {
+            setLoading(false);
+        }
+    }
 
 
 
 
     return (
-        <div className="fixed inset-0 overflow-y-auto bg-opacity-50 flex md:items-center justify-center">
-            <div className="bg-white sm:h-screen md:h-auto md:rounded-xl md:shadow-xl w-full max-w-xl p-6">
+        <MobileFrame innerClassName="overflow-y-auto p-6">
+            <div className="bg-white">
                 {/* Back Button */}
 
 
@@ -181,18 +217,13 @@ export default function CreateAccountForm() {
                                     render={({ field }) => (
                                         <FormItem>
                                             <FormControl>
-                                                <div className="relative">
-                                                    <Input
-                                                        placeholder="Email"
-                                                        {...field}
-                                                        className="border border-gray-300 w-full h-12 pr-24"
-                                                    />
-
-                                                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-gray-400 pointer-events-none">
-                                                        (Optional)
-                                                    </span>
-                                                </div>
-
+                                                <Input
+                                                    type="email"
+                                                    autoComplete="email"
+                                                    placeholder="Email"
+                                                    {...field}
+                                                    className="border border-gray-300 w-full h-12"
+                                                />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
@@ -382,9 +413,15 @@ export default function CreateAccountForm() {
                                 </div>
 
 
+                                {serverError && (
+                                    <p className="text-sm text-red-500 text-center" role="alert">
+                                        {serverError}
+                                    </p>
+                                )}
+
                                 <Button
                                     className={`
-                                        w-full py-6 rounded-md transition mt-20
+                                        w-full py-6 rounded-md transition mt-20 cursor-pointer
                                         ${isTab1Valid()
                                             ? "bg-[#01C259] hover:bg-[#019f4a]"
                                             : "bg-[#7BCD8A] cursor-not-allowed"}
@@ -394,7 +431,7 @@ export default function CreateAccountForm() {
                                     onClick={handleDone}
                                     loading={loading}
                                 >
-                                    Confirm
+                                    {loading ? "Creating account…" : "Confirm"}
                                 </Button>
 
                                 <div className="text-center text-sm pb-5">
@@ -408,6 +445,21 @@ export default function CreateAccountForm() {
                     </form>
                 </Form>
             </div>
-        </div>
+        </MobileFrame>
     );
 };
+
+function messageFor(err: unknown): string {
+    if (err instanceof ApiError) {
+        switch (err.code) {
+            case "timeout":
+                return "The server is waking up — please try again in a moment.";
+            case "network_error":
+                return "Couldn't reach the server. Check your connection.";
+            default:
+                if (err.status === 422) return "An account with this email already exists.";
+                return "Something went wrong creating your account. Please try again.";
+        }
+    }
+    return "Something went wrong creating your account. Please try again.";
+}

@@ -6,6 +6,7 @@ import {
     Check,
     Info,
 } from "lucide-react";
+import MobileFrame from "@/components/ui/mobile-frame";
 
 export default function LoanNotification() {
     const navigate = useNavigate();
@@ -104,7 +105,7 @@ export default function LoanNotification() {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50/50 flex flex-col">
+        <MobileFrame innerBg="bg-gray-50/50" innerClassName="flex flex-col">
 
             {/* --- HEADER SECTION --- */}
             <div className="relative flex items-center justify-center px-6 py-6 w-full pt-10 bg-white">
@@ -183,6 +184,6 @@ export default function LoanNotification() {
                     </div>
                 )}
             </div>
-        </div>
+        </MobileFrame>
     );
 }
