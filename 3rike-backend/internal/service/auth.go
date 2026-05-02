@@ -26,10 +26,11 @@ type authService struct {
 	users     domain.UserRepository
 	jwtSecret string
 	rdb       *redis.Client
+	cantonParticipantFingerprint string
 }
 
-func newAuthService(users domain.UserRepository, jwtSecret string, rdb *redis.Client) domain.AuthService {
-	return &authService{users: users, jwtSecret: jwtSecret, rdb: rdb}
+func newAuthService(users domain.UserRepository, jwtSecret string, rdb *redis.Client, fingerprint string) domain.AuthService {
+	return &authService{users: users, jwtSecret: jwtSecret, rdb: rdb, cantonParticipantFingerprint: fingerprint}
 }
 
 func (s *authService) Register(ctx context.Context, email, password string, role domain.Role) (*domain.User, error) {
@@ -51,6 +52,12 @@ func (s *authService) Login(ctx context.Context, email, password string) (string
 		return "", "", errors.New("invalid credentials")
 	}
 
+	// Derive Canton party ID from Keycloak sub + participant fingerprint.
+	if u.KeycloakSub != "" && s.cantonParticipantFingerprint != "" && u.CantonPartyID == "" {
+		u.CantonPartyID = u.KeycloakSub + "::" + s.cantonParticipantFingerprint
+		_ = s.users.Update(ctx, u)
+	}
+
 	now := time.Now()
 	sess := domain.Session{
 		ID:        fmt.Sprintf("%d-%d", u.ID, now.UnixNano()),
@@ -67,10 +74,11 @@ func (s *authService) Login(ctx context.Context, email, password string) (string
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"sub":        u.ID,
-		"role":       string(u.Role),
-		"session_id": sess.ID,
-		"exp":        sess.ExpiresAt.Unix(),
+		"sub":             u.ID,
+		"role":            string(u.Role),
+		"session_id":      sess.ID,
+		"canton_party_id": u.CantonPartyID,
+		"exp":             sess.ExpiresAt.Unix(),
 	})
 	signed, err := token.SignedString([]byte(s.jwtSecret))
 	return signed, sess.ID, err

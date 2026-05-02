@@ -21,7 +21,7 @@ type Services struct {
 	Waitlist domain.WaitlistService
 }
 
-func New(db *gorm.DB, cantonClient *canton.Client, jwtSecret string, rdb *redis.Client) *Services {
+func New(db *gorm.DB, cantonClient *canton.Client, jwtSecret string, rdb *redis.Client, cantonFingerprint string) *Services {
 	users := repository.NewUserRepo(db)
 	drivers := repository.NewDriverRepo(db)
 	investors := repository.NewInvestorRepo(db)
@@ -34,7 +34,7 @@ func New(db *gorm.DB, cantonClient *canton.Client, jwtSecret string, rdb *redis.
 	waitlist := repository.NewWaitlistRepo(db)
 
 	return &Services{
-		Auth:     newAuthService(users, jwtSecret, rdb),
+		Auth:     newAuthService(users, jwtSecret, rdb, cantonFingerprint),
 		User:     newUserService(users),
 		Driver:   newDriverService(drivers),
 		Investor: newInvestorService(investors, fractions),

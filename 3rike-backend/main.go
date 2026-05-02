@@ -27,15 +27,13 @@ func main() {
 		rdb = nil
 	}
 
-	var cantonClient *canton.Client
+	cantonClient := canton.New(cfg.CantonURL, cfg.CantonToken)
 	if cfg.OIDCTokenURL != "" && cfg.OIDCUsername != "" {
 		tp := canton.NewTokenProvider(cfg.OIDCTokenURL, cfg.OIDCClientID, cfg.OIDCUsername, cfg.OIDCPassword)
 		cantonClient = canton.NewWithTokenProvider(cfg.CantonURL, tp)
 		log.Println("canton: using OIDC token provider")
-	} else {
-		cantonClient = canton.New(cfg.CantonURL, cfg.CantonToken)
 	}
-	svc := service.New(database, cantonClient, cfg.JWTSecret, rdb)
+	svc := service.New(database, cantonClient, cfg.JWTSecret, rdb, cfg.CantonParticipantFingerprint)
 	h := handler.New(svc)
 
 	app := fiber.New(fiber.Config{AppName: "3riKE API v1"})
