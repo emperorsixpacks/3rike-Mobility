@@ -16,6 +16,16 @@ import (
 // DAML Int and Decimal fields must be serialized as strings per the JSON Ledger API spec.
 const TrikeContractsPkgID = "fb36f0cfcfe6c4b2a24f458f5ba06bfc697fa0584b13f44ae3d3568a294d4c19"
 
+// PartyID constructs a Canton party ID from a Keycloak subject claim and the
+// participant node fingerprint (the fixed suffix after :: for all users on the same node).
+// e.g. PartyID("70af8ee8-...", "1220195a...") → "70af8ee8-...::1220195a..."
+func PartyID(keycloakSub, participantFingerprint string) string {
+	if keycloakSub == "" || participantFingerprint == "" {
+		return ""
+	}
+	return keycloakSub + "::" + participantFingerprint
+}
+
 // Client is the Canton JSON Ledger API client.
 type Client struct {
 	baseURL       string
