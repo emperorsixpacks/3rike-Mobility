@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,21 +11,22 @@ import {
   Wallet as WalletIcon,
 } from "lucide-react";
 import MobileFrame from "@/components/ui/mobile-frame";
-import {
-  ApiError,
-  getWalletBalance,
-  type WalletBalance,
-} from "@/lib/api";
+import { ApiError } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
+import { useWalletBalance } from "@/lib/use-wallet-balance";
 
 export default function Wallet() {
   const navigate = useNavigate();
   const { user, linkWallet } = useAuth();
   const partyId = user?.canton_party_id ?? "";
 
-  const [balance, setBalance] = useState<WalletBalance | null>(null);
-  const [loadingBalance, setLoadingBalance] = useState(false);
-  const [balanceError, setBalanceError] = useState<string | null>(null);
+  const {
+    balance,
+    loading: loadingBalance,
+    error: balanceErrorObj,
+    refresh: loadBalance,
+  } = useWalletBalance();
+  const balanceError = balanceErrorObj ? messageFor(balanceErrorObj) : null;
 
   const [linkOpen, setLinkOpen] = useState(false);
   const [partyInput, setPartyInput] = useState("");
@@ -34,27 +35,6 @@ export default function Wallet() {
   const [linkSuccess, setLinkSuccess] = useState(false);
 
   const [copied, setCopied] = useState(false);
-
-  const loadBalance = useCallback(async () => {
-    if (!partyId) {
-      setBalance(null);
-      return;
-    }
-    setLoadingBalance(true);
-    setBalanceError(null);
-    try {
-      const b = await getWalletBalance();
-      setBalance(b);
-    } catch (err) {
-      setBalanceError(messageFor(err));
-    } finally {
-      setLoadingBalance(false);
-    }
-  }, [partyId]);
-
-  useEffect(() => {
-    void loadBalance();
-  }, [loadBalance]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();

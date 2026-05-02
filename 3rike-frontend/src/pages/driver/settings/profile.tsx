@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Check, ChevronLeft, ChevronRight, Copy } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import MobileFrame from "@/components/ui/mobile-frame";
+import Avatar from "@/components/ui/avatar";
 
 export default function SettingsProfile() {
     const navigate = useNavigate();
@@ -54,9 +55,7 @@ export default function SettingsProfile() {
 
                 {/* Profile Picture & Name */}
                 <div className="flex flex-col items-center gap-3 mt-4">
-                    <div className="w-15 h-15 rounded-full bg-gray-200 overflow-hidden border-2 border-white">
-                        <img className="w-15 h-15" src="/profile.png" alt="User" />
-                    </div>
+                    <Avatar name={fullName} size={72} />
                     <h2 className="text-gray-500 font-medium text-base">{firstName}</h2>
                 </div>
 
