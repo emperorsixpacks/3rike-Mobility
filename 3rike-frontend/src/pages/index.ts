@@ -48,6 +48,7 @@ import ActiveLoan from "./driver/loan/active";
 import EditEmail from "./driver/settings/edit-email";
 import ChangePassword from "./driver/settings/change-password";
 import Sessions from "./driver/settings/sessions";
+import Wallet from "./driver/wallet";
 export {
     Landing,
     NoMatch,
@@ -98,5 +99,6 @@ export {
     ActiveLoan,
     EditEmail,
     ChangePassword,
-    Sessions
+    Sessions,
+    Wallet
 }

@@ -8,6 +8,7 @@ import {
   Mail,
   Snowflake,
   MessageCircle,
+  Wallet,
   X,
   Info,
   ChevronRight,
@@ -98,6 +99,11 @@ export default function SettingsHome() {
                         icon={User}
                         label="My Profile"
                         onClick={() => navigate("/driver/settings/profile")}
+                    />
+                    <MenuItem
+                        icon={Wallet}
+                        label="Canton Wallet"
+                        onClick={() => navigate("/driver/wallet")}
                     />
                     <MenuItem
                         icon={Mail}

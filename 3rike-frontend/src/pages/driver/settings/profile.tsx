@@ -14,15 +14,15 @@ export default function SettingsProfile() {
     const firstName = fullName.split(" ")[0];
     const phone = driver?.phone || "—";
     const country = driver?.country || "—";
-    // Wallet address isn't yet exposed on the driver record. Keeping a
-    // placeholder until the backend exposes it (or until we add a wallet
-    // endpoint).
-    const walletAddress = "Not yet linked";
+    const walletPartyId = user?.canton_party_id ?? "";
+    const walletShort = walletPartyId
+        ? `${walletPartyId.slice(0, 8)}…${walletPartyId.slice(-6)}`
+        : "Not yet linked";
 
     const handleCopy = async () => {
-        if (walletAddress === "Not yet linked") return;
+        if (!walletPartyId) return;
         try {
-            await navigator.clipboard.writeText(walletAddress);
+            await navigator.clipboard.writeText(walletPartyId);
             setCopied(true);
             setTimeout(() => setCopied(false), 2000);
         } catch {
@@ -60,18 +60,29 @@ export default function SettingsProfile() {
                     <h2 className="text-gray-500 font-medium text-base">{firstName}</h2>
                 </div>
 
-                {/* Wallet Address Card */}
-                <div className="w-full bg-white rounded-xl p-4 flex items-center justify-between">
-                    <span className="text-gray-900 font-medium text-sm">3rike Wallet Address</span>
+                {/* Wallet Address Card — clickable when not linked, takes user to wallet page */}
+                <div
+                    onClick={() => !walletPartyId && navigate("/driver/wallet")}
+                    className={`w-full bg-white rounded-xl p-4 flex items-center justify-between ${
+                        !walletPartyId ? "cursor-pointer hover:bg-gray-50 transition-colors" : ""
+                    }`}
+                >
+                    <span className="text-gray-900 font-medium text-sm">Canton Wallet</span>
                     <div className="flex items-center gap-3">
-                        <span className="text-gray-400 text-sm truncate max-w-40">{walletAddress}</span>
-                        <button
-                            onClick={handleCopy}
-                            className="text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
-                            aria-label="Copy wallet address"
-                        >
-                            {copied ? <Check className="w-5 h-5 text-[#01C259]" /> : <Copy className="w-5 h-5" />}
-                        </button>
+                        <span className="text-gray-400 text-sm truncate max-w-40 font-mono text-[11px]">
+                            {walletShort}
+                        </span>
+                        {walletPartyId ? (
+                            <button
+                                onClick={handleCopy}
+                                className="text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
+                                aria-label="Copy party ID"
+                            >
+                                {copied ? <Check className="w-5 h-5 text-[#01C259]" /> : <Copy className="w-5 h-5" />}
+                            </button>
+                        ) : (
+                            <ChevronRight className="w-5 h-5 text-gray-400" />
+                        )}
                     </div>
                 </div>
 
