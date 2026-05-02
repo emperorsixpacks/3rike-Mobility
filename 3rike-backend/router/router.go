@@ -48,9 +48,10 @@ func Register(app *fiber.App, h *handler.Handlers, cfg *config.Config, rdb *redi
 	me.Get("/sessions", h.Auth.ListSessions)
 	me.Delete("/sessions/:sessionID", h.Auth.RevokeSession)
 	me.Get("/me", h.User.Me)
+	me.Get("/wallet/balance", h.User.WalletBalance)
+	me.Put("/wallet", h.User.LinkWallet)
 	me.Put("/profile", h.User.UpdateProfile)
 	me.Put("/password", h.User.ChangePassword)
-	me.Put("/wallet", h.User.LinkWallet)
 	me.Delete("/account", h.User.DeleteAccount)
 
 	// ── Protected API ─────────────────────────────────────────────────────────

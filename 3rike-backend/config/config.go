@@ -23,6 +23,7 @@ type Config struct {
 
 	// Canton operator party ID (your platform's party on the ledger).
 	CantonOperatorParty string
+	CantonValidatorURL  string
 }
 
 func Load() *Config {
@@ -42,6 +43,7 @@ func Load() *Config {
 		OIDCPassword: getEnv("OIDC_PASSWORD", ""),
 
 		CantonOperatorParty: getEnv("CANTON_OPERATOR_PARTY", ""),
+		CantonValidatorURL:  getEnv("CANTON_VALIDATOR_URL", "https://wallet.validator.hackcanton-01.devnet.naas.noders.services"),
 	}
 }
 

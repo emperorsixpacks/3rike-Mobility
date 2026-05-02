@@ -1,11 +1,18 @@
 package handler
 
 import (
+	"net/http"
+
 	"github.com/3rike12/3rike-backend/internal/domain"
+	"github.com/3rike12/3rike-backend/pkg/canton"
 	"github.com/gofiber/fiber/v2"
 )
 
-type UserHandler struct{ svc domain.UserService }
+type UserHandler struct {
+	svc          domain.UserService
+	canton       *canton.Client
+	validatorURL string
+}
 
 // Me godoc
 // @Summary      Get current user profile
@@ -77,6 +84,45 @@ func (h *UserHandler) DeleteAccount(c *fiber.Ctx) error {
 	return c.SendStatus(fiber.StatusNoContent)
 }
 
+// WalletBalance godoc
+// @Summary      Get CC balance from the user's Canton wallet
+// @Tags         user
+// @Security     BearerAuth
+// @Success      200  {object}  canton.WalletBalance
+// @Router       /auth/wallet/balance [get]
+func (h *UserHandler) WalletBalance(c *fiber.Ctx) error {
+	if h.validatorURL == "" {
+		return c.Status(fiber.StatusServiceUnavailable).JSON(fiber.Map{"error": "validator URL not configured"})
+	}
+	// Use the user's own Bearer token so the balance is theirs, not the operator's.
+	authHeader := c.Get("Authorization")
+	req, err := http.NewRequestWithContext(c.Context(), http.MethodGet,
+		h.validatorURL+"/api/validator/v0/wallet/balance", nil)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+	req.Header.Set("Authorization", authHeader)
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return c.Status(fiber.StatusBadGateway).JSON(fiber.Map{"error": err.Error()})
+	}
+	defer resp.Body.Close()
+	c.Set(fiber.HeaderContentType, fiber.MIMEApplicationJSON)
+	c.Status(resp.StatusCode)
+	var buf = make([]byte, 0, 256)
+	tmp := make([]byte, 512)
+	for {
+		n, err := resp.Body.Read(tmp)
+		if n > 0 {
+			buf = append(buf, tmp[:n]...)
+		}
+		if err != nil {
+			break
+		}
+	}
+	return c.Send(buf)
+}
+
 // LinkWallet godoc
 // @Summary      Link a Canton wallet party ID to the current user
 // @Tags         user
@@ -84,8 +130,7 @@ func (h *UserHandler) DeleteAccount(c *fiber.Ctx) error {
 // @Param        body  body  object{canton_party_id=string}  true  "Party ID"
 // @Success      200   {object}  domain.User
 // @Router       /auth/wallet [put]
-func (h *UserHandler) LinkWallet(c *fiber.Ctx) error {
-	userID := c.Locals("userID").(uint)
+func (h *UserHandler) LinkWallet(c *fiber.Ctx) error {	userID := c.Locals("userID").(uint)
 	var body struct {
 		CantonPartyID string `json:"canton_party_id"`
 	}

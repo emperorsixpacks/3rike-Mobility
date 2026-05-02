@@ -1,6 +1,9 @@
 package handler
 
-import "github.com/3rike12/3rike-backend/internal/service"
+import (
+	"github.com/3rike12/3rike-backend/internal/service"
+	"github.com/3rike12/3rike-backend/pkg/canton"
+)
 
 // Handlers is the top-level handler container.
 type Handlers struct {
@@ -16,10 +19,10 @@ type Handlers struct {
 	Waitlist *WaitlistHandler
 }
 
-func New(svc *service.Services) *Handlers {
+func New(svc *service.Services, cantonClient *canton.Client, validatorURL string) *Handlers {
 	return &Handlers{
 		Auth:     &AuthHandler{svc: svc.Auth},
-		User:     &UserHandler{svc: svc.User},
+		User:     &UserHandler{svc: svc.User, canton: cantonClient, validatorURL: validatorURL},
 		Driver:   &DriverHandler{svc: svc.Driver},
 		Investor: &InvestorHandler{svc: svc.Investor},
 		Tricycle: &TricycleHandler{svc: svc.Tricycle},

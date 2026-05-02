@@ -31,6 +31,7 @@ type Investor struct {
 	UserID        uint `gorm:"uniqueIndex;not null"`
 	FullName      string
 	WalletAddress string
+	BalanceUSDC   float64
 	CreatedAt     time.Time
 }
 

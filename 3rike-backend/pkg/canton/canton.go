@@ -138,7 +138,38 @@ func (c *Client) Fractionalize(ctx context.Context, contractID string, totalFrac
 	return &FractionalizeResult{ContractID: newContractID, TotalFractions: totalFractions}, nil
 }
 
-// extractContractID pulls the first contractId from a transaction tree response.
+// WalletBalance holds a user's CC balance from the Canton wallet.
+type WalletBalance struct {
+	Round               int    `json:"round"`
+	EffectiveUnlockedQty string `json:"effective_unlocked_qty"`
+	EffectiveLockedQty   string `json:"effective_locked_qty"`
+	TotalHoldingFees     string `json:"total_holding_fees"`
+}
+
+// GetWalletBalance fetches the CC balance for the authenticated user from the validator wallet API.
+func (c *Client) GetWalletBalance(ctx context.Context, validatorURL string) (*WalletBalance, error) {
+	tok, err := c.bearerToken()
+	if err != nil {
+		return nil, err
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, validatorURL+"/api/validator/v0/wallet/balance", nil)
+	if err != nil {
+		return nil, err
+	}
+	if tok != "" {
+		req.Header.Set("Authorization", "Bearer "+tok)
+	}
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode >= 400 {
+		return nil, fmt.Errorf("canton: wallet balance HTTP %d", resp.StatusCode)
+	}
+	var bal WalletBalance
+	return &bal, json.NewDecoder(resp.Body).Decode(&bal)
+}
 func extractContractID(data []byte) (string, error) {
 	var result struct {
 		TransactionTree struct {
