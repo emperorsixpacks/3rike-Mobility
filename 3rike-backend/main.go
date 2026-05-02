@@ -33,6 +33,10 @@ func main() {
 		cantonClient = canton.NewWithTokenProvider(cfg.CantonURL, tp)
 		log.Println("canton: using OIDC token provider")
 	}
+	if cfg.CantonOperatorParty != "" {
+		cantonClient.WithOperatorParty(cfg.CantonOperatorParty)
+		log.Printf("canton: operator party set, fees charged to operator")
+	}
 	svc := service.New(database, cantonClient, cfg.JWTSecret, rdb)
 	h := handler.New(svc, cantonClient, cfg.CantonValidatorURL)
 
