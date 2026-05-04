@@ -42,11 +42,15 @@ func NewWithTokenProvider(baseURL string, tp *TokenProvider) *Client {
 }
 
 // WithOperatorParty sets the operator party as an observer on all contracts.
-// The user (caller) still pays their own transaction fees.
 func (c *Client) WithOperatorParty(party string) *Client {
 	c.operatorParty = party
 	return c
 }
+
+// OperatorParty returns the configured operator party ID.
+func (c *Client) OperatorParty() string { return c.operatorParty }
+
+// OperatorParty returns the configured operator party ID.
 
 // readAs returns the user party + operator party (if set) as observers.
 func (c *Client) readAs(userParty string) []string {

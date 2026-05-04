@@ -93,14 +93,15 @@ func (s *fractionService) Buy(
 	}
 
 	// Submit Fractionalize choice on Canton — deducts CC from callerParty.
-	// This uses the existing contract and re-exercises the choice with the
-	// investor's units, creating a real on-chain transaction.
-	if t.ContractID != "" && callerParty != "" && s.canton != nil {
-		_, err := s.canton.Fractionalize(ctx, t.ContractID, units, callerParty)
-		if err != nil {
-			// Log but don't fail — record the DB fraction regardless.
-			// The CC deduction is best-effort; the investment is still valid.
-			_ = err
+	// Falls back to operator party if user hasn't linked their wallet.
+	party := callerParty
+	if party == "" {
+		party = s.canton.OperatorParty()
+	}
+	if t.ContractID != "" && party != "" && s.canton != nil {
+		if _, err := s.canton.Fractionalize(ctx, t.ContractID, units, party); err != nil {
+			// Log but don't block — DB record is still created.
+			fmt.Printf("canton fractionalize warning: %v\n", err)
 		}
 	}
 
