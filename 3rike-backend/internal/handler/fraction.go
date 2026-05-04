@@ -32,6 +32,7 @@ func (h *FractionHandler) Available(c *fiber.Ctx) error {
 // then records the Fraction. Returns the new Fraction on success.
 func (h *FractionHandler) Buy(c *fiber.Ctx) error {
 	userID := c.Locals("userID").(uint)
+	party, _ := c.Locals("cantonPartyID").(string)
 
 	var body struct {
 		TricycleID uint `json:"tricycle_id"`
@@ -44,7 +45,7 @@ func (h *FractionHandler) Buy(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "missing_tricycle_id"})
 	}
 
-	frac, err := h.svc.Buy(c.Context(), userID, body.TricycleID, body.Units)
+	frac, err := h.svc.Buy(c.Context(), userID, body.TricycleID, body.Units, party)
 	if err != nil {
 		switch {
 		case errors.Is(err, service.ErrInvalidUnits):

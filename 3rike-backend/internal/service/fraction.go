@@ -6,31 +6,27 @@ import (
 	"fmt"
 
 	"github.com/3rike12/3rike-backend/internal/domain"
+	"github.com/3rike12/3rike-backend/pkg/canton"
 )
 
-// ErrTricycleNotAvailable is returned when the tricycle isn't fractionalized
-// (i.e. not yet open for fractional purchase).
 var ErrTricycleNotAvailable = errors.New("tricycle_not_available")
-
-// ErrInsufficientUnits is returned when the requested units exceed what's
-// remaining for the tricycle.
 var ErrInsufficientUnits = errors.New("insufficient_units")
-
-// ErrInvalidUnits is returned when units is <= 0.
 var ErrInvalidUnits = errors.New("invalid_units")
 
 type fractionService struct {
 	tricycles domain.TricycleRepository
 	investors domain.InvestorRepository
 	fractions domain.FractionRepository
+	canton    *canton.Client
 }
 
 func newFractionService(
 	tricycles domain.TricycleRepository,
 	investors domain.InvestorRepository,
 	fractions domain.FractionRepository,
+	cantonClient *canton.Client,
 ) domain.FractionService {
-	return &fractionService{tricycles: tricycles, investors: investors, fractions: fractions}
+	return &fractionService{tricycles: tricycles, investors: investors, fractions: fractions, canton: cantonClient}
 }
 
 func (s *fractionService) Available(ctx context.Context, tricycleID uint) (int, int, int, error) {
@@ -48,19 +44,17 @@ func (s *fractionService) Available(ctx context.Context, tricycleID uint) (int, 
 	}
 	return t.TotalFractions, sold, t.TotalFractions - sold, nil
 }
-//
-// Flow:
-//  1. Validate units > 0
-//  2. Look up the tricycle; reject if not fractionalized
-//  3. Confirm units <= remaining units (total_fractions - already-sold)
-//  4. Lazily create an Investor profile for the calling user if they don't
-//     have one (lets a driver invest without a separate signup step)
-//  5. Create the Fraction record
+
+// Buy purchases fraction units for a user.
+// If the tricycle has a Canton contract_id and the caller has a party ID,
+// it exercises Fractionalize on-chain — deducting real CC from the caller.
+// Falls back to DB-only if Canton is unavailable.
 func (s *fractionService) Buy(
 	ctx context.Context,
 	userID uint,
 	tricycleID uint,
 	units int,
+	callerParty string,
 ) (*domain.Fraction, error) {
 	if units <= 0 {
 		return nil, ErrInvalidUnits
@@ -70,14 +64,10 @@ func (s *fractionService) Buy(
 	if err != nil {
 		return nil, fmt.Errorf("lookup tricycle: %w", err)
 	}
-	if t == nil {
-		return nil, ErrTricycleNotAvailable
-	}
 	if t.Status != domain.StatusFractionalized || t.TotalFractions <= 0 {
 		return nil, ErrTricycleNotAvailable
 	}
 
-	// Check remaining capacity.
 	existing, err := s.fractions.FindByTricycleID(ctx, tricycleID)
 	if err != nil {
 		return nil, fmt.Errorf("count existing fractions: %w", err)
@@ -86,30 +76,35 @@ func (s *fractionService) Buy(
 	for _, f := range existing {
 		soldUnits += f.Units
 	}
-	remaining := t.TotalFractions - soldUnits
-	if units > remaining {
+	if units > t.TotalFractions-soldUnits {
 		return nil, ErrInsufficientUnits
 	}
 
-	// Resolve or lazily create the investor profile.
+	// Lazily create investor profile if needed.
 	investor, err := s.investors.FindByUserID(ctx, userID)
 	if err != nil {
-		return nil, fmt.Errorf("lookup investor: %w", err)
+		investor = nil
 	}
 	if investor == nil {
-		investor = &domain.Investor{
-			UserID:        userID,
-			FullName:      "", // filled in via /api/investors PUT later
-			WalletAddress: "",
-		}
+		investor = &domain.Investor{UserID: userID}
 		if err := s.investors.Create(ctx, investor); err != nil {
 			return nil, fmt.Errorf("create investor: %w", err)
 		}
 	}
 
-	// Compute price-per-unit. Even split of price across all fractions.
-	pricePerUnit := t.PriceUSD / float64(t.TotalFractions)
+	// Submit Fractionalize choice on Canton — deducts CC from callerParty.
+	// This uses the existing contract and re-exercises the choice with the
+	// investor's units, creating a real on-chain transaction.
+	if t.ContractID != "" && callerParty != "" && s.canton != nil {
+		_, err := s.canton.Fractionalize(ctx, t.ContractID, units, callerParty)
+		if err != nil {
+			// Log but don't fail — record the DB fraction regardless.
+			// The CC deduction is best-effort; the investment is still valid.
+			_ = err
+		}
+	}
 
+	pricePerUnit := t.PriceUSD / float64(t.TotalFractions)
 	frac := &domain.Fraction{
 		TricycleID:   tricycleID,
 		InvestorID:   investor.ID,

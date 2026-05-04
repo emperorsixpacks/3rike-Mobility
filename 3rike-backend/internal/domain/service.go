@@ -71,6 +71,6 @@ type WaitlistService interface {
 // (the "buy 2 fleets / 10 shares" flow). The investor profile is lazily
 // created on first purchase so callers don't need a separate signup step.
 type FractionService interface {
-	Buy(ctx context.Context, userID uint, tricycleID uint, units int) (*Fraction, error)
+	Buy(ctx context.Context, userID uint, tricycleID uint, units int, callerParty string) (*Fraction, error)
 	Available(ctx context.Context, tricycleID uint) (total int, sold int, remaining int, err error)
 }
