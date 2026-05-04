@@ -2,6 +2,7 @@ package handler
 
 import (
 	"errors"
+	"strconv"
 
 	"github.com/3rike12/3rike-backend/internal/domain"
 	"github.com/3rike12/3rike-backend/internal/service"
@@ -10,7 +11,19 @@ import (
 
 type FractionHandler struct{ svc domain.FractionService }
 
-// Buy handles POST /api/fractions.
+// Available handles GET /api/tricycles/:id/fractions/available
+func (h *FractionHandler) Available(c *fiber.Ctx) error {
+	id, _ := strconv.Atoi(c.Params("id"))
+	total, sold, remaining, err := h.svc.Available(c.Context(), uint(id))
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "not found"})
+	}
+	return c.JSON(fiber.Map{
+		"total":     total,
+		"sold":      sold,
+		"remaining": remaining,
+	})
+}
 //
 // Body: { tricycle_id: uint, units: int }
 // Auth: JWT (caller's user ID is taken from the token; no spoofing).

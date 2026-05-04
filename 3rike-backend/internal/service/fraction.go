@@ -33,7 +33,21 @@ func newFractionService(
 	return &fractionService{tricycles: tricycles, investors: investors, fractions: fractions}
 }
 
-// Buy is the user-facing "purchase fraction" entry point.
+func (s *fractionService) Available(ctx context.Context, tricycleID uint) (int, int, int, error) {
+	t, err := s.tricycles.FindByID(ctx, tricycleID)
+	if err != nil {
+		return 0, 0, 0, err
+	}
+	existing, err := s.fractions.FindByTricycleID(ctx, tricycleID)
+	if err != nil {
+		return 0, 0, 0, err
+	}
+	sold := 0
+	for _, f := range existing {
+		sold += f.Units
+	}
+	return t.TotalFractions, sold, t.TotalFractions - sold, nil
+}
 //
 // Flow:
 //  1. Validate units > 0

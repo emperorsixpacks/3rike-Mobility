@@ -76,6 +76,7 @@ func Register(app *fiber.App, h *handler.Handlers, cfg *config.Config, rdb *redi
 	tricycles.Post("/", h.Tricycle.Create)
 	tricycles.Get("/", middleware.Cache(rdb, 5*time.Minute), h.Tricycle.List)
 	tricycles.Get("/:id", middleware.Cache(rdb, 5*time.Minute), h.Tricycle.GetByID)
+	tricycles.Get("/:id/fractions/available", middleware.Cache(rdb, 30*time.Second), h.Fraction.Available)
 	tricycles.Post("/:id/tokenize", h.Tricycle.Tokenize)
 	tricycles.Post("/:id/fractionalize", h.Tricycle.Fractionalize)
 
