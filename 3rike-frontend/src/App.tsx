@@ -5,11 +5,13 @@ import { CreateAccountForm, ForgotPasswordEmailForm, ForgotPasswordPhoneForm, La
 import SelectCryptoAsset from "./pages/driver/withdraw/crypto/select-crypto";
 import { AuthProvider } from "@/lib/auth";
 import RequireAuth from "@/lib/require-auth";
+import ErrorBoundary from "@/components/ui/error-boundary";
 
 
 function App() {
   return (
     <BrowserRouter>
+      <ErrorBoundary>
       <AuthProvider>
       <div style={{ fontFamily: "Geist" }}>
         <Routes>
@@ -112,6 +114,7 @@ function App() {
         </Routes>
       </div>
       </AuthProvider>
+      </ErrorBoundary>
     </BrowserRouter>
   );
 }

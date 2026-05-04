@@ -1,14 +1,17 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
 import { useNavigate } from "react-router-dom";
-import { ArrowUpRight, Plus, Hourglass } from "lucide-react";
+import { ArrowUpRight, Plus, TrendingUp } from "lucide-react";
 import DepositModal from "../deposit";
 import WithdrawOptions from "../withdraw/options";
 import BottomNav from "@/components/ui/bottom-nav";
+import Avatar from "@/components/ui/avatar";
+import Skeleton from "@/components/ui/skeleton";
+import HowItWorks, { shouldShowHowItWorks } from "./how-it-works";
 import { useAuth } from "@/lib/auth";
 import { useSavings } from "@/lib/use-savings";
 import { useEarnings } from "@/lib/use-earnings";
+import { useWalletBalance } from "@/lib/use-wallet-balance";
 
 // Local UX states layered on top of the backend driver record:
 //   - not_started: no driver profile yet → CTA to start KYC
@@ -22,9 +25,14 @@ const POST_KYC_KEY = "3rike.postKycStatus"; // overrides only — only set after
 export default function DriverDashboard() {
   const navigate = useNavigate();
   const { user, driver } = useAuth();
-  const { balance: savingsBalance, refresh: refreshSavings } = useSavings();
-  const { total: lifetimeEarnings } = useEarnings();
-  const [changeCurrency, setChangeCurrency] = useState(true);
+  const { balance: savingsBalance, isLoading: savingsLoading, refresh: refreshSavings } = useSavings();
+  const { total: lifetimeEarnings, loading: earningsLoading } = useEarnings();
+  const {
+    balance: walletBalance,
+    loading: walletLoading,
+    isLinked: walletLinked,
+    refresh: refreshWallet,
+  } = useWalletBalance();
   const [verificationStatus, setVerificationStatus] = useState<VerificationStatus>(
     () => deriveStatus(driver),
   );
@@ -32,6 +40,9 @@ export default function DriverDashboard() {
   // State to control the modals
   const [isDepositOpen, setIsDepositOpen] = useState(false);
   const [isWithdrawOpen, setIsWithdrawOpen] = useState(false);
+  // First-run "How 3rike works" overlay — initialized from localStorage so
+  // returning users don't re-see it.
+  const [howItWorksOpen, setHowItWorksOpen] = useState(() => shouldShowHowItWorks());
 
   // Re-derive when the driver profile changes (e.g. after KYC).
   useEffect(() => {
@@ -54,6 +65,18 @@ export default function DriverDashboard() {
     }, 2000);
     return () => clearTimeout(t);
   }, [verificationStatus, driver]);
+
+  // Auto-refresh balances when the tab regains focus — covers the case where
+  // a user pays/deposits inside the app and the OS pauses our JS, or where
+  // they hit the back button after a deeper flow.
+  useEffect(() => {
+    const onFocus = () => {
+      void refreshSavings();
+      void refreshWallet();
+    };
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
+  }, [refreshSavings, refreshWallet]);
 
   const handleLoan = () => {
     navigate("/driver/loan");
@@ -80,20 +103,26 @@ export default function DriverDashboard() {
     <div className="min-h-screen bg-white flex justify-center">
       {/* Mobile Frame Container */}
       <div className="w-full max-w-100 bg-white shadow-2xl overflow-hidden min-h-200 relative pb-10">
-        {/* Header Profile */}
+        {/* Header Profile — tap to open the profile page */}
         <div className="px-6 flex items-center justify-between pt-6 mb-4">
-          <div className="flex items-center gap-3 bg-white rounded-full">
-            {/* Replace with actual user image */}
-            <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden border-2 border-white">
-              <img src="/profile.png" alt="User" />
-            </div>
-            <span className="font-light text-sm -mr-5">
-              Welcome, {driver?.full_name || user?.email || "rider"}
+          <button
+            type="button"
+            onClick={() => navigate("/driver/settings/profile")}
+            className="flex items-center gap-3 bg-white rounded-full cursor-pointer hover:opacity-90 transition-opacity"
+          >
+            <Avatar
+              name={driver?.full_name || user?.email || "rider"}
+              size={40}
+              className="border-2 border-white"
+            />
+            <span className="font-light text-sm -mr-5 text-left">
+              {greetingFor(new Date())},{" "}
+              <span className="font-medium">{firstNameOf(driver?.full_name, user?.email)}</span>
             </span>
-            <Button variant="link">
+            <Button variant="link" tabIndex={-1}>
               <img src="arrow.svg" alt="Arrow" className="w-5 h-5" />
             </Button>
-          </div>
+          </button>
         </div>
 
         {/* Main Content Scroll Area */}
@@ -108,26 +137,36 @@ export default function DriverDashboard() {
             />
 
             <div className="relative z-10">
-              <div className="flex justify-between items-start mb-2">
-                <span className="text-green-100 text-sm font-light">
-                  Total Lifetime Earnings
-                </span>
-              </div>
+              <div
+                onClick={() => navigate("/driver/wallet")}
+                className="cursor-pointer"
+              >
+                <div className="flex justify-between items-start mb-2">
+                  <span className="text-green-100 text-sm font-light">
+                    {walletLinked ? "Wallet Balance" : "Wallet"}
+                  </span>
+                  {walletBalance && (
+                    <span className="text-green-100/80 text-[10px] font-light">
+                      Round #{walletBalance.round.toLocaleString()}
+                    </span>
+                  )}
+                </div>
 
-              <div className="flex flex-row justify-between mb-6">
-                <h1 className="text-4xl font-bold ">
-                  {changeCurrency
-                    ? `$ ${formatBalance(lifetimeEarnings)}`
-                    : `₵ ${formatBalance(lifetimeEarnings)}`}
-                </h1>
-
-                {/* Custom Toggle Switch */}
-                <div className="flex items-center rounded-full ">
-                  <Switch
-                    checked={changeCurrency}
-                    onCheckedChange={setChangeCurrency}
-                    className="data-[state=checked]:bg-black/25 data-[state=unchecked]:bg-black/25 h-6 w-10 border-5 border-transparent -rotate-90"
-                  />
+                <div className="flex flex-row justify-between mb-6 min-h-12">
+                  {!walletLinked ? (
+                    <h1 className="text-2xl font-medium">
+                      Tap to link wallet →
+                    </h1>
+                  ) : walletLoading && !walletBalance ? (
+                    <Skeleton className="h-10 w-40 bg-white/20" />
+                  ) : (
+                    <h1 className="text-4xl font-bold">
+                      {formatCC(walletBalance?.effective_unlocked_qty)}
+                      <span className="text-base font-light text-white/80 ml-1.5 align-middle">
+                        CC
+                      </span>
+                    </h1>
+                  )}
                 </div>
               </div>
 
@@ -164,20 +203,30 @@ export default function DriverDashboard() {
               </div>
               <div>
                 <p className="text-xs text-gray-400 mb-1">Savings Balance</p>
-                <h3 className="text-xl font-light text-gray-800">
-                  ${" "}{formatBalance(savingsBalance)}
-                </h3>
+                {savingsLoading ? (
+                  <Skeleton className="h-7 w-24" />
+                ) : (
+                  <h3 className="text-xl font-light text-gray-800">
+                    ${" "}{formatBalance(savingsBalance)}
+                  </h3>
+                )}
               </div>
             </div>
 
-            {/* Pending Payout */}
-            <div className="bg-white border-3 border-dashed border-gray-100 rounded-2xl p-4 flex flex-col gap-3 ">
-              <div className="w-8 h-8 rounded-lg bg-orange-100 flex items-center justify-center">
-                <Hourglass className="w-4 h-4 text-orange-500" />
+            {/* Lifetime Earnings — sum of yield payouts */}
+            <div className="bg-white border-3 border-dashed border-gray-100 rounded-2xl p-4 flex flex-col gap-3">
+              <div className="w-8 h-8 rounded-lg bg-[#FFF7EC] flex items-center justify-center">
+                <TrendingUp className="w-4 h-4 text-[#EE9C2E]" />
               </div>
               <div>
-                <p className="text-xs text-gray-400 mb-1">Pending Payout</p>
-                <h3 className="text-xl font-light text-gray-800">$ 0.00</h3>
+                <p className="text-xs text-gray-400 mb-1">Lifetime Earnings</p>
+                {earningsLoading ? (
+                  <Skeleton className="h-7 w-24" />
+                ) : (
+                  <h3 className="text-xl font-light text-gray-800">
+                    $ {formatBalance(lifetimeEarnings)}
+                  </h3>
+                )}
               </div>
             </div>
           </div>
@@ -336,6 +385,9 @@ export default function DriverDashboard() {
         </div>
 
         <BottomNav />
+
+        {/* First-run onboarding — only shows once per browser */}
+        {howItWorksOpen && <HowItWorks onClose={() => setHowItWorksOpen(false)} />}
       </div>
 
       {/* deposit modal */}
@@ -367,6 +419,29 @@ function deriveStatus(
 
 function formatBalance(usdc: number): string {
   return usdc.toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
+
+function greetingFor(now: Date): string {
+  const h = now.getHours();
+  if (h < 12) return "Good morning";
+  if (h < 17) return "Good afternoon";
+  return "Good evening";
+}
+
+function firstNameOf(fullName?: string, email?: string): string {
+  if (fullName && fullName.trim()) return fullName.trim().split(/\s+/)[0]!;
+  if (email) return email.split("@")[0]!;
+  return "rider";
+}
+
+function formatCC(raw?: string): string {
+  if (!raw) return "—";
+  const n = Number(raw);
+  if (!Number.isFinite(n)) return raw;
+  return n.toLocaleString(undefined, {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,21 +11,23 @@ import {
   Wallet as WalletIcon,
 } from "lucide-react";
 import MobileFrame from "@/components/ui/mobile-frame";
-import {
-  ApiError,
-  getWalletBalance,
-  type WalletBalance,
-} from "@/lib/api";
+import { ApiError } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
+import { useWalletBalance } from "@/lib/use-wallet-balance";
+import Skeleton from "@/components/ui/skeleton";
 
 export default function Wallet() {
   const navigate = useNavigate();
   const { user, linkWallet } = useAuth();
   const partyId = user?.canton_party_id ?? "";
 
-  const [balance, setBalance] = useState<WalletBalance | null>(null);
-  const [loadingBalance, setLoadingBalance] = useState(false);
-  const [balanceError, setBalanceError] = useState<string | null>(null);
+  const {
+    balance,
+    loading: loadingBalance,
+    error: balanceErrorObj,
+    refresh: loadBalance,
+  } = useWalletBalance();
+  const balanceError = balanceErrorObj ? messageFor(balanceErrorObj) : null;
 
   const [linkOpen, setLinkOpen] = useState(false);
   const [partyInput, setPartyInput] = useState("");
@@ -34,27 +36,6 @@ export default function Wallet() {
   const [linkSuccess, setLinkSuccess] = useState(false);
 
   const [copied, setCopied] = useState(false);
-
-  const loadBalance = useCallback(async () => {
-    if (!partyId) {
-      setBalance(null);
-      return;
-    }
-    setLoadingBalance(true);
-    setBalanceError(null);
-    try {
-      const b = await getWalletBalance();
-      setBalance(b);
-    } catch (err) {
-      setBalanceError(messageFor(err));
-    } finally {
-      setLoadingBalance(false);
-    }
-  }, [partyId]);
-
-  useEffect(() => {
-    void loadBalance();
-  }, [loadBalance]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -165,8 +146,9 @@ export default function Wallet() {
               <div className="relative z-10">
                 <p className="text-xs text-white/80 mb-1">Available balance</p>
                 {loadingBalance && !balance ? (
-                  <div className="h-10 flex items-center">
-                    <div className="w-6 h-6 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                  <div className="space-y-2">
+                    <Skeleton className="h-10 w-48 bg-white/20" />
+                    <Skeleton className="h-3 w-24 bg-white/15" />
                   </div>
                 ) : balanceError ? (
                   <p className="text-sm font-medium">—</p>

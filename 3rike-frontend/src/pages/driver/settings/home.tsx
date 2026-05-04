@@ -20,12 +20,13 @@ import MobileFrame from "@/components/ui/mobile-frame";
 export default function SettingsHome() {
     const navigate = useNavigate();
     const { logout, deleteAccount } = useAuth();
+    const [confirmSignOut, setConfirmSignOut] = useState(false);
     const [signingOut, setSigningOut] = useState(false);
     const [confirmDelete, setConfirmDelete] = useState(false);
     const [deleting, setDeleting] = useState(false);
     const [deleteError, setDeleteError] = useState<string | null>(null);
 
-    const handleSignOut = async () => {
+    const handleSignOutConfirm = async () => {
         setSigningOut(true);
         try {
             await logout();
@@ -168,13 +169,48 @@ export default function SettingsHome() {
             {/* --- Footer Button --- */}
             <div className="absolute bottom-15 left-0 right-0 p-6 bg-white/80 backdrop-blur-sm">
                 <Button
-                    onClick={handleSignOut}
+                    onClick={() => setConfirmSignOut(true)}
                     disabled={signingOut}
                     className="w-full py-6 rounded-xl bg-[#01C259] hover:bg-[#01b050] text-white text-lg font-light shadow-md transition-all active:scale-[0.98] cursor-pointer disabled:opacity-60"
                 >
                     {signingOut ? "Signing out…" : "Sign Out"}
                 </Button>
             </div>
+
+            {/* --- Sign-out confirmation --- */}
+            {confirmSignOut && (
+                <div className="absolute inset-0 z-50 bg-black/40 flex items-end justify-center animate-in fade-in duration-200">
+                    <div className="w-full bg-white rounded-t-3xl p-6 pb-8 animate-in slide-in-from-bottom duration-300">
+                        <div className="mx-auto w-12 h-2 bg-gray-300 rounded-full mb-6" />
+                        <h3 className="text-xl font-bold text-gray-900 text-center mb-2">
+                            Sign out?
+                        </h3>
+                        <p className="text-sm text-[#909090] text-center mb-6">
+                            You'll need to sign in again to access your account.
+                        </p>
+
+                        <div className="flex gap-3">
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                disabled={signingOut}
+                                onClick={() => setConfirmSignOut(false)}
+                                className="flex-1 h-12 rounded-xl border border-gray-200 text-gray-700 cursor-pointer"
+                            >
+                                Cancel
+                            </Button>
+                            <Button
+                                type="button"
+                                disabled={signingOut}
+                                onClick={handleSignOutConfirm}
+                                className="flex-1 h-12 rounded-xl bg-[#01C259] hover:bg-[#00a049] text-white font-medium cursor-pointer disabled:opacity-60"
+                            >
+                                {signingOut ? "Signing out…" : "Sign out"}
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* --- Close-account confirmation --- */}
             {confirmDelete && (

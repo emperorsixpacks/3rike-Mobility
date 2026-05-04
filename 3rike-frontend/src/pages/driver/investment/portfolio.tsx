@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft } from "lucide-react";
 import MobileFrame from "@/components/ui/mobile-frame";
+import Skeleton from "@/components/ui/skeleton";
 import {
   ApiError,
   getTricycle,
@@ -101,8 +102,23 @@ export default function InvestmentPortfolio() {
 
       {/* List */}
       {rows === null && (
-        <div className="flex-1 flex items-center justify-center">
-          <div className="w-8 h-8 border-3 border-[#01C259] border-t-transparent rounded-full animate-spin" />
+        <div className="space-y-3">
+          {[0, 1, 2].map((i) => (
+            <div
+              key={i}
+              className="bg-white border border-gray-100 rounded-2xl p-4 flex items-center gap-4"
+            >
+              <Skeleton className="w-12 h-12 rounded-xl" />
+              <div className="flex-1 space-y-2">
+                <Skeleton className="h-3.5 w-32" />
+                <Skeleton className="h-3 w-24" />
+              </div>
+              <div className="text-right space-y-2">
+                <Skeleton className="h-3.5 w-16 ml-auto" />
+                <Skeleton className="h-2.5 w-12 ml-auto" />
+              </div>
+            </div>
+          ))}
         </div>
       )}
 
