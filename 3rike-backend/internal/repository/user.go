@@ -38,7 +38,7 @@ func (r *userRepo) FindByID(ctx context.Context, id uint) (*domain.User, error) 
 
 func (r *userRepo) Update(ctx context.Context, u *domain.User) error {
 	return r.db.WithContext(ctx).Model(&User{}).Where("id = ?", u.ID).
-		Updates(map[string]any{"email": u.Email, "password_hash": u.PasswordHash}).Error
+		Updates(map[string]any{"email": u.Email, "password_hash": u.PasswordHash, "canton_party_id": u.CantonPartyID}).Error
 }
 
 func (r *userRepo) Delete(ctx context.Context, id uint) error {
@@ -46,5 +46,5 @@ func (r *userRepo) Delete(ctx context.Context, id uint) error {
 }
 
 func toDomainUser(m *User) *domain.User {
-	return &domain.User{ID: m.ID, Email: m.Email, PasswordHash: m.PasswordHash, Role: domain.Role(m.Role), CreatedAt: m.CreatedAt}
+	return &domain.User{ID: m.ID, Email: m.Email, PasswordHash: m.PasswordHash, Role: domain.Role(m.Role), CantonPartyID: m.CantonPartyID, CreatedAt: m.CreatedAt}
 }
