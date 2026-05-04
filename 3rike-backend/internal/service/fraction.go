@@ -94,8 +94,7 @@ func (s *fractionService) Buy(
 	// Resolve or lazily create the investor profile.
 	investor, err := s.investors.FindByUserID(ctx, userID)
 	if err != nil {
-		// GORM returns "record not found" when no investor exists — treat as nil.
-		investor = nil
+		return nil, fmt.Errorf("lookup investor: %w", err)
 	}
 	if investor == nil {
 		investor = &domain.Investor{

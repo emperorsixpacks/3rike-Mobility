@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"errors"
 
 	"github.com/3rike12/3rike-backend/internal/domain"
 	"gorm.io/gorm"
@@ -31,6 +32,9 @@ func (r *investorRepo) FindByID(ctx context.Context, id uint) (*domain.Investor,
 func (r *investorRepo) FindByUserID(ctx context.Context, userID uint) (*domain.Investor, error) {
 	var m Investor
 	if err := r.db.WithContext(ctx).Where("user_id = ?", userID).First(&m).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
 		return nil, err
 	}
 	return toDomainInvestor(&m), nil
